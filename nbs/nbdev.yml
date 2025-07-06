@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "cjm-nbdev-docments"
+  site-url: "https://cj-mills.github.io/cjm-nbdev-docments"
+  description: "Tool for validating and updating documentation in nbdev projects for use with the fastcore.docments module."
+  repo-branch: main
+  repo-url: "https://github.com/cj-mills/cjm-nbdev-docments"
