@@ -28,19 +28,13 @@ def check_project(
     return results
 
 # %% ../nbs/02_report.ipynb 5
-def generate_text_report(
-    results: List[DocmentsCheckResult],  # Check results from check_project
-    verbose: bool = False  # Include detailed information
-) -> str:  # Formatted text report
-    "Generate a human-readable text report of compliance results"
+def _generate_summary_stats(
+    results: List[DocmentsCheckResult]  # Check results to summarize
+) -> List[str]:  # Lines of summary statistics
+    "Generate summary statistics section of the report"
     compliant = [r for r in results if r.is_compliant]
     non_compliant = [r for r in results if not r.is_compliant]
     with_todos = [r for r in results if r.has_todos]
-    
-    # Group by notebook
-    by_notebook = defaultdict(list)
-    for r in results:
-        by_notebook[r.notebook].append(r)
     
     lines = []
     lines.append("📚 Docments Compliance Report")
@@ -51,6 +45,17 @@ def generate_text_report(
     if with_todos:
         lines.append(f"⚠️  With TODO placeholders: {len(with_todos)}")
     lines.append("")
+    
+    return lines
+
+# %% ../nbs/02_report.ipynb 6
+def _generate_non_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of non-compliant section
+    "Generate non-compliant definitions section of the report"
+    non_compliant = [r for r in results if not r.is_compliant]
+    lines = []
     
     if non_compliant:
         lines.append("❌ Non-compliant definitions:")
@@ -69,6 +74,17 @@ def generate_text_report(
                     if r.missing_params:
                         lines.append(f"     - Missing docs for: {', '.join(r.missing_params)}")
     
+    return lines
+
+# %% ../nbs/02_report.ipynb 7
+def _generate_todos_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of TODOs section
+    "Generate TODO placeholders section of the report"
+    with_todos = [r for r in results if r.has_todos]
+    lines = []
+    
     if with_todos:
         lines.append("\n⚠️  Definitions with TODO placeholders:")
         lines.append("-" * 30)
@@ -82,7 +98,18 @@ def generate_text_report(
                 for r in nb_todos:
                     lines.append(f"  ⚠️  {r.name} ({r.todo_count} TODOs)")
     
-    if verbose and compliant:
+    return lines
+
+# %% ../nbs/02_report.ipynb 8
+def _generate_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of compliant section
+    "Generate compliant definitions section of the report"
+    compliant = [r for r in results if r.is_compliant]
+    lines = []
+    
+    if compliant:
         lines.append("\n✅ Compliant definitions:")
         lines.append("-" * 30)
         for nb in sorted(by_notebook.keys()):
@@ -94,9 +121,37 @@ def generate_text_report(
                 for r in nb_compliant:
                     lines.append(f"  ✅ {r.name}")
     
+    return lines
+
+# %% ../nbs/02_report.ipynb 9
+def generate_text_report(
+    results: List[DocmentsCheckResult],  # Check results from check_project
+    verbose: bool = False  # Include detailed information
+) -> str:  # Formatted text report
+    "Generate a human-readable text report of compliance results"
+    # Group by notebook
+    by_notebook = defaultdict(list)
+    for r in results:
+        by_notebook[r.notebook].append(r)
+    
+    lines = []
+    
+    # Add summary statistics
+    lines.extend(_generate_summary_stats(results))
+    
+    # Add non-compliant section
+    lines.extend(_generate_non_compliant_section(results, by_notebook))
+    
+    # Add TODOs section
+    lines.extend(_generate_todos_section(results, by_notebook))
+    
+    # Add compliant section (if verbose)
+    if verbose:
+        lines.extend(_generate_compliant_section(results, by_notebook))
+    
     return "\n".join(lines)
 
-# %% ../nbs/02_report.ipynb 6
+# %% ../nbs/02_report.ipynb 10
 def generate_json_report(
     results: List[DocmentsCheckResult]  # Check results from check_project
 ) -> Dict[str, Any]:  # JSON-serializable report data
