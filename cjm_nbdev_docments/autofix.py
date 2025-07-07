@@ -6,9 +6,13 @@
 __all__ = ['find_signature_boundaries', 'split_parameters', 'parse_single_line_signature', 'generate_param_todo_comment',
            'generate_return_todo_comment', 'build_fixed_single_line_function', 'fix_multi_line_signature',
            'fix_class_definition', 'insert_function_docstring', 'fix_single_line_function', 'fix_multi_line_function',
-           'generate_fixed_source', 'fix_notebook']
+           'generate_fixed_source', 'fix_notebook', 'DocstringInfo', 'detect_docstring_style', 'parse_google_docstring',
+           'parse_numpy_docstring', 'parse_sphinx_docstring', 'extract_docstring_info', 'convert_to_docments_format',
+           'convert_single_line_to_docments', 'convert_multiline_to_docments', 'replace_docstring_in_body',
+           'generate_fixed_source_with_conversion', 'fix_notebook_with_conversion']
 
 # %% ../nbs/03_autofix.ipynb 3
+import ast
 from typing import List, Dict, Any, Optional
 import re
 from pathlib import Path
@@ -26,6 +30,7 @@ def needs_fixing(
     "Check if this definition needs any fixing"
     return not self.is_compliant or self.missing_params or self.params_missing_type_hints
 
+# %% ../nbs/03_autofix.ipynb 5
 @patch
 def get_param_name(
     self: DocmentsCheckResult,
@@ -34,6 +39,7 @@ def get_param_name(
     "Extract parameter name from a parameter string"
     return param_str.split(':', 1)[0].split('=', 1)[0].strip()
 
+# %% ../nbs/03_autofix.ipynb 6
 @patch 
 def needs_param_fix(
     self: DocmentsCheckResult,
@@ -44,7 +50,7 @@ def needs_param_fix(
     needs_type_hint = param_name in self.params_missing_type_hints and param_name != 'self'
     return needs_doc or needs_type_hint
 
-# %% ../nbs/03_autofix.ipynb 5
+# %% ../nbs/03_autofix.ipynb 7
 def find_signature_boundaries(
     lines: List[str]  # Source code lines
 ) -> tuple[int, int]:  # (def_line_idx, sig_end_idx) or (-1, -1) if not found
@@ -78,7 +84,7 @@ def find_signature_boundaries(
     
     return def_line_idx, sig_end_idx
 
-# %% ../nbs/03_autofix.ipynb 6
+# %% ../nbs/03_autofix.ipynb 8
 def split_parameters(
     params_str: str  # Parameter string from function signature
 ) -> List[str]:  # List of individual parameter strings
@@ -118,7 +124,7 @@ def split_parameters(
     # Return as L for easier manipulation
     return L(params).filter()
 
-# %% ../nbs/03_autofix.ipynb 7
+# %% ../nbs/03_autofix.ipynb 9
 def parse_single_line_signature(
     sig_line: str  # Single-line function signature
 ) -> dict:  # Parsed components of the signature
@@ -136,7 +142,7 @@ def parse_single_line_signature(
         'existing_comment': func_match.group(6).strip()
     }
 
-# %% ../nbs/03_autofix.ipynb 8
+# %% ../nbs/03_autofix.ipynb 10
 def generate_param_todo_comment(
     param_name: str,  # Parameter name
     result: DocmentsCheckResult,  # Check result with type hint and doc info
@@ -166,7 +172,7 @@ def generate_param_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify documentation"
 
-# %% ../nbs/03_autofix.ipynb 9
+# %% ../nbs/03_autofix.ipynb 11
 def generate_return_todo_comment(
     result: DocmentsCheckResult,  # Check result with type hint and doc info
     existing_comment: str = ""  # Existing comment text (without #)
@@ -195,7 +201,7 @@ def generate_return_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify description"
 
-# %% ../nbs/03_autofix.ipynb 10
+# %% ../nbs/03_autofix.ipynb 12
 def build_fixed_single_line_function(
     parsed: dict,  # Parsed signature components
     params: List[str],  # Individual parameter strings
@@ -273,7 +279,7 @@ def build_fixed_single_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 11
+# %% ../nbs/03_autofix.ipynb 13
 def fix_multi_line_signature(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Start of function definition
@@ -338,7 +344,7 @@ def fix_multi_line_signature(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 12
+# %% ../nbs/03_autofix.ipynb 14
 def fix_class_definition(
     result: DocmentsCheckResult  # Check result with non-compliant class
 ) -> str:  # Fixed source code with class docstring
@@ -378,7 +384,7 @@ def fix_class_definition(
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 13
+# %% ../nbs/03_autofix.ipynb 15
 def insert_function_docstring(
     lines: List[str],  # Fixed function lines
     def_line_idx: int,  # Index of function definition line
@@ -407,7 +413,7 @@ def insert_function_docstring(
     
     return result_lines
 
-# %% ../nbs/03_autofix.ipynb 14
+# %% ../nbs/03_autofix.ipynb 16
 def fix_single_line_function(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Index of function definition line
@@ -444,7 +450,7 @@ def fix_single_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 15
+# %% ../nbs/03_autofix.ipynb 17
 def fix_multi_line_function(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Start of function definition
@@ -476,7 +482,7 @@ def fix_multi_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 16
+# %% ../nbs/03_autofix.ipynb 18
 def generate_fixed_source(
     result: DocmentsCheckResult  # Check result with non-compliant function
 ) -> str:  # Fixed source code with placeholder documentation
@@ -507,7 +513,7 @@ def generate_fixed_source(
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 17
+# %% ../nbs/03_autofix.ipynb 19
 def fix_notebook(
     nb_path: Path,  # Path to notebook to fix
     dry_run: bool = False  # If True, show changes without saving
@@ -575,6 +581,593 @@ def fix_notebook(
         count = len(changes['definitions_fixed'])
         item_word = "definition" if count == 1 else "definitions" 
         print(f"\n🔍 Dry run: Would fix {count} {item_word}")
+    else:
+        print(f"✅ All definitions in {nb_path.name} are already compliant")
+    
+    return changes
+
+# %% ../nbs/03_autofix.ipynb 20
+import re
+from typing import Dict, List, Optional, Tuple, NamedTuple
+
+class DocstringInfo(NamedTuple):
+    """Information extracted from a docstring"""
+    description: str  # Main function description
+    params: Dict[str, str]  # Parameter name -> description
+    returns: Optional[str]  # Return description
+    docstring_type: str  # Type of docstring (google, numpy, sphinx, etc.)
+
+def detect_docstring_style(
+    docstring: str  # Docstring text to analyze
+) -> str:  # Detected style: 'google', 'numpy', 'sphinx', 'docments', or 'unknown'
+    "Detect the style of a docstring"
+    if not docstring:
+        return 'unknown'
+    
+    docstring = docstring.strip()
+    
+    # Check for Google style (Args:, Returns:, etc.)
+    if re.search(r'(Args?|Arguments?|Parameters?|Params?|Returns?|Return|Yields?|Yield|Raises?|Raise|Note|Notes|Example|Examples):\s*$', docstring, re.MULTILINE):
+        return 'google'
+    
+    # Check for NumPy style (Parameters\n----------)
+    if re.search(r'(Parameters?|Returns?|Yields?|Raises?|See Also|Notes?|References?|Examples?)\s*\n\s*-{3,}', docstring, re.MULTILINE):
+        return 'numpy'
+    
+    # Check for Sphinx style (:param, :type, :returns, etc.)
+    if re.search(r':(param|type|returns?|rtype|raises?|note|example)(\s+\w+)?:', docstring, re.MULTILINE):
+        return 'sphinx'
+    
+    # Check if already in docments style (very simple check)
+    # This would be harder to detect since docments puts docs inline
+    # For now, assume unknown if none of the above patterns match
+    return 'unknown'
+
+# %% ../nbs/03_autofix.ipynb 21
+def parse_google_docstring(
+    docstring: str  # Google-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a Google-style docstring"
+    params = {}
+    returns = None
+    description_lines = []
+    
+    # Clean the docstring - remove triple quotes and normalize
+    cleaned = docstring.strip()
+    if cleaned.startswith('"""') or cleaned.startswith("'''"):
+        cleaned = cleaned[3:]
+    if cleaned.endswith('"""') or cleaned.endswith("'''"):
+        cleaned = cleaned[:-3]
+    
+    lines = cleaned.split('\n')
+    current_section = None
+    current_param = None
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Check for section headers
+        if re.match(r'^(Args?|Arguments?|Parameters?|Params?):\s*$', line):
+            current_section = 'params'
+            continue
+        elif re.match(r'^(Returns?|Return):\s*$', line):
+            current_section = 'returns'
+            continue
+        elif re.match(r'^(Yields?|Yield|Raises?|Raise|Note|Notes|Example|Examples):\s*$', line):
+            current_section = 'other'
+            continue
+        
+        # Process content based on current section
+        if current_section == 'params':
+            # Look for parameter definitions: "param_name (type): description"
+            param_match = re.match(r'^(\w+)\s*(?:\([^)]+\))?\s*:\s*(.+)$', line)
+            if param_match:
+                param_name = param_match.group(1)
+                param_desc = param_match.group(2)
+                params[param_name] = param_desc
+                current_param = param_name
+            elif current_param and line:
+                # Continuation of previous parameter description
+                params[current_param] += ' ' + line
+        elif current_section == 'returns':
+            if line:
+                if returns is None:
+                    returns = line
+                else:
+                    returns += ' ' + line
+        elif current_section is None:
+            # This is part of the main description
+            if line:
+                description_lines.append(line)
+    
+    description = ' '.join(description_lines)
+    return DocstringInfo(description, params, returns, 'google')
+
+# %% ../nbs/03_autofix.ipynb 22
+def parse_numpy_docstring(
+    docstring: str  # NumPy-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a NumPy-style docstring"
+    params = {}
+    returns = None
+    description_lines = []
+    
+    # Clean the docstring - remove triple quotes and normalize
+    cleaned = docstring.strip()
+    if cleaned.startswith('"""') or cleaned.startswith("'''"):
+        cleaned = cleaned[3:]
+    if cleaned.endswith('"""') or cleaned.endswith("'''"):
+        cleaned = cleaned[:-3]
+    
+    lines = cleaned.split('\n')
+    current_section = None
+    current_param = None
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        
+        # Check for section headers (followed by dashes)
+        if i + 1 < len(lines) and re.match(r'^-{3,}$', lines[i + 1].strip()):
+            if re.match(r'^(Parameters?|Params?)$', line_stripped):
+                current_section = 'params'
+                continue
+            elif re.match(r'^(Returns?|Return)$', line_stripped):
+                current_section = 'returns'
+                continue
+            elif re.match(r'^(Yields?|Raises?|See Also|Notes?|References?|Examples?)$', line_stripped):
+                current_section = 'other'
+                continue
+        
+        # Skip the dashes line
+        if re.match(r'^-{3,}$', line_stripped):
+            continue
+        
+        # Process content based on current section
+        if current_section == 'params':
+            # Look for parameter definitions: "param_name : type" followed by description
+            param_match = re.match(r'^(\w+)\s*:\s*(.+)$', line_stripped)
+            if param_match:
+                param_name = param_match.group(1)
+                # The type information is on the same line, description usually follows
+                current_param = param_name
+                params[param_name] = ''
+            elif current_param and line_stripped:
+                # Description line for the current parameter
+                if params[current_param]:
+                    params[current_param] += ' ' + line_stripped
+                else:
+                    params[current_param] = line_stripped
+        elif current_section == 'returns':
+            if line_stripped:
+                if returns is None:
+                    returns = line_stripped
+                else:
+                    returns += ' ' + line_stripped
+        elif current_section is None:
+            # This is part of the main description
+            if line_stripped:
+                description_lines.append(line_stripped)
+    
+    description = ' '.join(description_lines)
+    return DocstringInfo(description, params, returns, 'numpy')
+
+# %% ../nbs/03_autofix.ipynb 23
+def parse_sphinx_docstring(
+    docstring: str  # Sphinx-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a Sphinx-style docstring"
+    params = {}
+    returns = None
+    description_lines = []
+    
+    lines = docstring.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Check for parameter definitions: ":param param_name: description"
+        param_match = re.match(r'^:param\s+(\w+)\s*:\s*(.+)$', line)
+        if param_match:
+            param_name = param_match.group(1)
+            param_desc = param_match.group(2)
+            params[param_name] = param_desc
+            continue
+        
+        # Check for return definitions: ":returns: description" or ":return: description"
+        return_match = re.match(r'^:returns?\s*:\s*(.+)$', line)
+        if return_match:
+            returns = return_match.group(1)
+            continue
+        
+        # Skip other sphinx directives
+        if re.match(r'^:\w+(\s+\w+)?:', line):
+            continue
+        
+        # This is part of the main description
+        if line:
+            description_lines.append(line)
+    
+    description = ' '.join(description_lines)
+    return DocstringInfo(description, params, returns, 'sphinx')
+
+# %% ../nbs/03_autofix.ipynb 24
+def extract_docstring_info(
+    source: str,  # Function source code
+    name: str  # Function name
+) -> Optional[DocstringInfo]:  # Extracted docstring information or None
+    "Extract docstring information from function source code"
+    try:
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name == name and node.body:
+                    # Check if first statement is a docstring
+                    first_stmt = node.body[0]
+                    if (isinstance(first_stmt, ast.Expr) and 
+                        isinstance(first_stmt.value, (ast.Str, ast.Constant))):
+                        
+                        # Extract docstring text
+                        if hasattr(first_stmt.value, 's'):
+                            docstring = first_stmt.value.s
+                        elif hasattr(first_stmt.value, 'value'):
+                            docstring = first_stmt.value.value
+                        else:
+                            return None
+                        
+                        if not isinstance(docstring, str):
+                            return None
+                        
+                        # Detect and parse the docstring style
+                        style = detect_docstring_style(docstring)
+                        
+                        if style == 'google':
+                            return parse_google_docstring(docstring)
+                        elif style == 'numpy':
+                            return parse_numpy_docstring(docstring)
+                        elif style == 'sphinx':
+                            return parse_sphinx_docstring(docstring)
+                        else:
+                            # Unknown style, return basic info
+                            return DocstringInfo(docstring.strip(), {}, None, 'unknown')
+                    break
+    except Exception:
+        return None
+    
+    return None
+
+# %% ../nbs/03_autofix.ipynb 25
+def convert_to_docments_format(
+    source: str,  # Original function source code
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> str:  # Converted source code in docments format
+    "Convert function source to docments format using extracted docstring info"
+    lines = source.split('\n')
+    
+    # Find the function definition line and signature end
+    def_line_idx, sig_end_idx = find_signature_boundaries(lines)
+    
+    if def_line_idx == -1:
+        return source
+    
+    # Build the new function with docments-style documentation
+    fixed_lines = []
+    
+    # Add lines before the function
+    for i in range(def_line_idx):
+        fixed_lines.append(lines[i])
+    
+    # Convert single-line to multi-line if needed or fix existing multi-line
+    if def_line_idx == sig_end_idx:
+        # Single-line signature - convert to multi-line with docments comments
+        fixed_lines.extend(convert_single_line_to_docments(lines[def_line_idx], docstring_info, result))
+    else:
+        # Multi-line signature - add docments comments to existing structure
+        fixed_lines.extend(convert_multiline_to_docments(lines[def_line_idx:sig_end_idx+1], docstring_info, result))
+    
+    # Replace the original docstring with the description only
+    body_start_idx = sig_end_idx + 1
+    if body_start_idx < len(lines):
+        # Find the docstring in the function body and replace it
+        body_lines = lines[body_start_idx:]
+        new_body_lines = replace_docstring_in_body(body_lines, docstring_info.description, lines[def_line_idx])
+        fixed_lines.extend(new_body_lines)
+    
+    return '\n'.join(fixed_lines)
+
+# %% ../nbs/03_autofix.ipynb 26
+def convert_single_line_to_docments(
+    sig_line: str,  # Single-line function signature
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Multi-line signature with docments comments
+    "Convert single-line function signature to multi-line docments format"
+    
+    # Parse the signature
+    parsed = parse_single_line_signature(sig_line)
+    if not parsed:
+        return [sig_line]
+    
+    # Split parameters
+    params = split_parameters(parsed['params_str'])
+    
+    # Build the new signature
+    fixed_lines = []
+    indent = parsed['indent']
+    
+    # Start the function definition
+    fixed_lines.append(f"{indent}{parsed['def_keyword']} {parsed['func_name']}(")
+    
+    # Add parameters with docments comments
+    for i, param in enumerate(params):
+        param_name = result.get_param_name(param)
+        
+        # Get documentation from the extracted docstring info
+        param_doc = docstring_info.params.get(param_name, '')
+        
+        if param_doc:
+            # Use the extracted documentation
+            if i < len(params) - 1:
+                fixed_lines.append(f"{indent}    {param},  # {param_doc}")
+            else:
+                fixed_lines.append(f"{indent}    {param}  # {param_doc}")
+        else:
+            # No documentation found, add TODO
+            if param_name in result.missing_params:
+                todo_comment = generate_param_todo_comment(param_name, result)
+                if i < len(params) - 1:
+                    fixed_lines.append(f"{indent}    {param},  # {todo_comment}")
+                else:
+                    fixed_lines.append(f"{indent}    {param}  # {todo_comment}")
+            else:
+                # Keep as is
+                if i < len(params) - 1:
+                    fixed_lines.append(f"{indent}    {param},")
+                else:
+                    fixed_lines.append(f"{indent}    {param}")
+    
+    # Handle return type
+    return_type = parsed['return_type']
+    if return_type and docstring_info.returns:
+        fixed_lines.append(f"{indent}){return_type}:  # {docstring_info.returns}")
+    elif return_type and 'return' in result.missing_params:
+        todo_comment = generate_return_todo_comment(result)
+        fixed_lines.append(f"{indent}){return_type}:  # {todo_comment}")
+    elif return_type:
+        fixed_lines.append(f"{indent}){return_type}:")
+    else:
+        fixed_lines.append(f"{indent}):")
+    
+    return fixed_lines
+
+# %% ../nbs/03_autofix.ipynb 27
+def convert_multiline_to_docments(
+    sig_lines: List[str],  # Multi-line function signature
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Multi-line signature with docments comments
+    "Convert multi-line function signature to docments format"
+    
+    fixed_lines = []
+    
+    for i, line in enumerate(sig_lines):
+        line_stripped = line.strip()
+        
+        # Check if this line contains a parameter
+        param_match = re.match(r'^(\s*)(\w+)(\s*(?::\s*[^,\)#]+)?)\s*([,\)]?)(\s*)(?:#\s*(.*))?$', line)
+        if param_match and i > 0 and i < len(sig_lines) - 1:
+            # This is a parameter line
+            indent = param_match.group(1)
+            param_name = param_match.group(2)
+            type_annotation = param_match.group(3) or ''
+            trailing_punct = param_match.group(4) or ''
+            trailing_space = param_match.group(5) or ''
+            existing_comment = param_match.group(6) or ''
+            
+            # Get documentation from the extracted docstring info
+            param_doc = docstring_info.params.get(param_name, '')
+            
+            if param_doc:
+                # Use the extracted documentation
+                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {param_doc}")
+            elif param_name in result.missing_params:
+                # No documentation found, add TODO
+                todo_comment = generate_param_todo_comment(param_name, result, existing_comment)
+                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {todo_comment}")
+            else:
+                # Keep original
+                fixed_lines.append(line)
+        else:
+            # Check for return type line
+            return_match = re.match(r'^(\s*\)\s*->\s*[^:#]+)\s*:\s*(.*)$', line)
+            if return_match and docstring_info.returns:
+                pre_colon = return_match.group(1)
+                fixed_lines.append(f"{pre_colon}:  # {docstring_info.returns}")
+            elif return_match and 'return' in result.missing_params:
+                pre_colon = return_match.group(1)
+                existing_comment = return_match.group(2).strip()
+                comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
+                todo_comment = generate_return_todo_comment(result, comment_text)
+                fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+            else:
+                fixed_lines.append(line)
+    
+    return fixed_lines
+
+# %% ../nbs/03_autofix.ipynb 28
+def replace_docstring_in_body(
+    body_lines: List[str],  # Function body lines
+    description: str,  # New description to use
+    def_line: str  # Function definition line for indentation
+) -> List[str]:  # Modified body lines
+    "Replace the docstring in function body with a simple description"
+    
+    # Find the indentation of the function definition
+    indent_match = re.match(r'^(\s*)', def_line)
+    base_indent = indent_match.group(1) if indent_match else ''
+    docstring_indent = base_indent + '    '
+    
+    # Look for the docstring (first string literal after function definition)
+    docstring_found = False
+    result_lines = []
+    in_multiline_docstring = False
+    
+    for i, line in enumerate(body_lines):
+        line_stripped = line.strip()
+        
+        # If we haven't found the docstring yet and this line is not empty
+        if not docstring_found and line_stripped:
+            # Check if it starts a docstring
+            if line_stripped.startswith(('"""', "'''", '"', "'")):
+                docstring_found = True
+                
+                # Check if it's a single-line docstring
+                if ((line_stripped.startswith('"""') and line_stripped.endswith('"""') and len(line_stripped) > 6) or
+                    (line_stripped.startswith("'''") and line_stripped.endswith("'''") and len(line_stripped) > 6) or
+                    (line_stripped.startswith('"') and line_stripped.endswith('"') and len(line_stripped) > 2 and not line_stripped.startswith('"""')) or
+                    (line_stripped.startswith("'") and line_stripped.endswith("'") and len(line_stripped) > 2 and not line_stripped.startswith("'''"))):
+                    # Single-line docstring
+                    result_lines.append(f'{docstring_indent}"{description}"')
+                else:
+                    # Start of multi-line docstring
+                    in_multiline_docstring = True
+                    result_lines.append(f'{docstring_indent}"{description}"')
+            else:
+                # Not a docstring, keep the line
+                result_lines.append(line)
+        elif in_multiline_docstring:
+            # We're inside a multi-line docstring, check if this ends it
+            if line_stripped.endswith(('"""', "'''")):
+                in_multiline_docstring = False
+                # Skip this line (end of docstring)
+            # Skip all lines inside the multi-line docstring
+        else:
+            # Either we already processed the docstring or this is a regular line
+            result_lines.append(line)
+    
+    # If no docstring was found, add the description at the beginning
+    if not docstring_found:
+        result_lines.insert(0, f'{docstring_indent}"{description}"')
+    
+    return result_lines
+
+# %% ../nbs/03_autofix.ipynb 29
+def generate_fixed_source_with_conversion(
+    result: DocmentsCheckResult  # Check result with non-compliant function
+) -> str:  # Fixed source code with converted documentation
+    "Generate fixed source code, converting existing docstrings to docments format if possible"
+    
+    # First, try to extract docstring information for conversion
+    docstring_info = extract_docstring_info(result.source, result.name)
+    
+    # If we found structured docstring info (not unknown), convert it
+    if (docstring_info and 
+        docstring_info.docstring_type in ['google', 'numpy', 'sphinx'] and
+        (docstring_info.params or docstring_info.returns)):
+        try:
+            converted_source = convert_to_docments_format(result.source, docstring_info, result)
+            return converted_source
+        except Exception:
+            # Fallback to original fix if conversion fails
+            pass
+    
+    # Fallback to the original generate_fixed_source function
+    return generate_fixed_source(result)
+
+# %% ../nbs/03_autofix.ipynb 30
+def fix_notebook_with_conversion(
+    nb_path: Path,  # Path to notebook to fix
+    dry_run: bool = False,  # If True, show changes without saving
+    convert_docstrings: bool = True  # If True, convert existing docstrings to docments format
+) -> Dict[str, Any]:  # Summary of changes made
+    "Fix non-compliant functions in a notebook, optionally converting docstrings to docments format"
+    nb = read_nb(nb_path)
+    definitions = scan_notebook(nb_path)
+    
+    changes = {
+        'notebook': nb_path.name,
+        'definitions_fixed': [],
+        'definitions_converted': [],
+        'cells_modified': []
+    }
+    
+    # Check each definition
+    for defn in definitions:
+        result = check_definition(defn)
+        
+        # Fix if non-compliant OR has missing type hints
+        needs_fixing = (not result.is_compliant or 
+                       result.missing_params or 
+                       result.params_missing_type_hints)
+        
+        if needs_fixing:
+            # Choose the appropriate fix method
+            if convert_docstrings:
+                fixed_source = generate_fixed_source_with_conversion(result)
+                
+                # Check if this was a conversion (has structured docstring info)
+                docstring_info = extract_docstring_info(result.source, result.name)
+                is_conversion = (docstring_info and 
+                               docstring_info.docstring_type in ['google', 'numpy', 'sphinx'])
+            else:
+                fixed_source = generate_fixed_source(result)
+                is_conversion = False
+            
+            # Only proceed if the source actually changed
+            if fixed_source != result.source:
+                # Find and update the cell
+                cell_id = defn['cell_id']
+                for cell in nb.cells:
+                    if cell.get('id') == cell_id:
+                        # Replace the definition in the cell source
+                        old_source = result.source
+                        cell_source = cell.source
+                        
+                        # Find the definition in the cell and replace it
+                        if old_source in cell_source:
+                            new_cell_source = cell_source.replace(old_source, fixed_source)
+                            
+                            if not dry_run:
+                                cell.source = new_cell_source
+                            
+                            changes['definitions_fixed'].append(result.name)
+                            if is_conversion:
+                                changes['definitions_converted'].append(result.name)
+                            
+                            if cell_id not in changes['cells_modified']:
+                                changes['cells_modified'].append(cell_id)
+                            
+                            if dry_run:
+                                action = "convert and fix" if is_conversion else "fix"
+                                print(f"\nWould {action} {result.name}:")
+                                print("-" * 40)
+                                print(fixed_source)
+                                print("-" * 40)
+    
+    # Save the notebook if not dry run
+    if not dry_run and changes['definitions_fixed']:
+        write_nb(nb, nb_path)
+        
+        # Report results
+        fixed_count = len(changes['definitions_fixed'])
+        converted_count = len(changes['definitions_converted'])
+        
+        if converted_count > 0:
+            print(f"✅ Fixed {fixed_count} definitions in {nb_path.name} ({converted_count} converted from other docstring styles)")
+        else:
+            print(f"✅ Fixed {fixed_count} definitions in {nb_path.name}")
+        
+        for defn_name in changes['definitions_fixed']:
+            action = "converted & fixed" if defn_name in changes['definitions_converted'] else "fixed"
+            print(f"   - {defn_name} ({action})")
+    elif dry_run and changes['definitions_fixed']:
+        fixed_count = len(changes['definitions_fixed'])
+        converted_count = len(changes['definitions_converted'])
+        
+        if converted_count > 0:
+            print(f"\n🔍 Dry run: Would fix {fixed_count} definitions ({converted_count} converted from other docstring styles)")
+        else:
+            print(f"\n🔍 Dry run: Would fix {fixed_count} definitions")
     else:
         print(f"✅ All definitions in {nb_path.name} are already compliant")
     

@@ -44,6 +44,9 @@ Examples:
   # Auto-fix non-compliant functions
   nbdev-docments --fix
   
+  # Auto-fix with docstring conversion
+  nbdev-docments --fix --convert-docstrings
+  
   # Preview fixes without applying
   nbdev-docments --fix --dry-run
 """
@@ -93,6 +96,12 @@ Examples:
     )
     
     parser.add_argument(
+        "--convert-docstrings",
+        action="store_true",
+        help="Convert existing Google/NumPy/Sphinx docstrings to docments format (use with --fix)"
+    )
+    
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show what would be fixed without making changes"
@@ -105,7 +114,7 @@ def handle_autofix(
     args: argparse.Namespace  # Parsed command line arguments
 ) -> int:  # Exit code
     "Handle auto-fix mode for non-compliant functions"
-    from cjm_nbdev_docments.autofix import fix_notebook
+    from cjm_nbdev_docments.autofix import fix_notebook, fix_notebook_with_conversion
     
     if args.nbs_path:
         nbs_path = args.nbs_path
@@ -113,12 +122,20 @@ def handle_autofix(
         cfg = get_config()
         nbs_path = Path(cfg.config_path) / cfg.nbs_path
     
+    # Choose the appropriate fix function based on whether conversion is requested
+    if args.convert_docstrings:
+        fix_function = lambda nb_path, dry_run: fix_notebook_with_conversion(
+            nb_path, dry_run=dry_run, convert_docstrings=True
+        )
+    else:
+        fix_function = fix_notebook
+    
     # Fix all notebooks
     total_fixed = 0
     for nb_path in nbs_path.glob("*.ipynb"):
         if not nb_path.name.startswith('_'):
             try:
-                changes = fix_notebook(nb_path, dry_run=args.dry_run)
+                changes = fix_function(nb_path, args.dry_run)
                 total_fixed += len(changes['definitions_fixed'])
             except Exception as e:
                 print(f"Error fixing {nb_path}: {e}", file=sys.stderr)
