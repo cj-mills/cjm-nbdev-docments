@@ -13,7 +13,7 @@ __all__ = ['find_signature_boundaries', 'split_parameters', 'parse_single_line_s
 
 # %% ../nbs/03_autofix.ipynb 3
 import ast
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, NamedTuple
 import re
 from pathlib import Path
 from execnb.nbio import read_nb, write_nb
@@ -587,9 +587,6 @@ def fix_notebook(
     return changes
 
 # %% ../nbs/03_autofix.ipynb 20
-import re
-from typing import Dict, List, Optional, Tuple, NamedTuple
-
 class DocstringInfo(NamedTuple):
     """Information extracted from a docstring"""
     description: str  # Main function description
@@ -597,6 +594,7 @@ class DocstringInfo(NamedTuple):
     returns: Optional[str]  # Return description
     docstring_type: str  # Type of docstring (google, numpy, sphinx, etc.)
 
+# %% ../nbs/03_autofix.ipynb 21
 def detect_docstring_style(
     docstring: str  # Docstring text to analyze
 ) -> str:  # Detected style: 'google', 'numpy', 'sphinx', 'docments', or 'unknown'
@@ -623,7 +621,7 @@ def detect_docstring_style(
     # For now, assume unknown if none of the above patterns match
     return 'unknown'
 
-# %% ../nbs/03_autofix.ipynb 21
+# %% ../nbs/03_autofix.ipynb 22
 def parse_google_docstring(
     docstring: str  # Google-style docstring text
 ) -> DocstringInfo:  # Parsed docstring information
@@ -683,7 +681,7 @@ def parse_google_docstring(
     description = ' '.join(description_lines)
     return DocstringInfo(description, params, returns, 'google')
 
-# %% ../nbs/03_autofix.ipynb 22
+# %% ../nbs/03_autofix.ipynb 23
 def parse_numpy_docstring(
     docstring: str  # NumPy-style docstring text
 ) -> DocstringInfo:  # Parsed docstring information
@@ -751,7 +749,7 @@ def parse_numpy_docstring(
     description = ' '.join(description_lines)
     return DocstringInfo(description, params, returns, 'numpy')
 
-# %% ../nbs/03_autofix.ipynb 23
+# %% ../nbs/03_autofix.ipynb 24
 def parse_sphinx_docstring(
     docstring: str  # Sphinx-style docstring text
 ) -> DocstringInfo:  # Parsed docstring information
@@ -790,7 +788,7 @@ def parse_sphinx_docstring(
     description = ' '.join(description_lines)
     return DocstringInfo(description, params, returns, 'sphinx')
 
-# %% ../nbs/03_autofix.ipynb 24
+# %% ../nbs/03_autofix.ipynb 25
 def extract_docstring_info(
     source: str,  # Function source code
     name: str  # Function name
@@ -835,7 +833,7 @@ def extract_docstring_info(
     
     return None
 
-# %% ../nbs/03_autofix.ipynb 25
+# %% ../nbs/03_autofix.ipynb 26
 def convert_to_docments_format(
     source: str,  # Original function source code
     docstring_info: DocstringInfo,  # Extracted docstring information
@@ -875,7 +873,7 @@ def convert_to_docments_format(
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 26
+# %% ../nbs/03_autofix.ipynb 27
 def convert_single_line_to_docments(
     sig_line: str,  # Single-line function signature
     docstring_info: DocstringInfo,  # Extracted docstring information
@@ -940,7 +938,7 @@ def convert_single_line_to_docments(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 27
+# %% ../nbs/03_autofix.ipynb 28
 def convert_multiline_to_docments(
     sig_lines: List[str],  # Multi-line function signature
     docstring_info: DocstringInfo,  # Extracted docstring information
@@ -994,7 +992,7 @@ def convert_multiline_to_docments(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 28
+# %% ../nbs/03_autofix.ipynb 29
 def replace_docstring_in_body(
     body_lines: List[str],  # Function body lines
     description: str,  # New description to use
@@ -1051,7 +1049,7 @@ def replace_docstring_in_body(
     
     return result_lines
 
-# %% ../nbs/03_autofix.ipynb 29
+# %% ../nbs/03_autofix.ipynb 30
 def generate_fixed_source_with_conversion(
     result: DocmentsCheckResult  # Check result with non-compliant function
 ) -> str:  # Fixed source code with converted documentation
@@ -1074,7 +1072,7 @@ def generate_fixed_source_with_conversion(
     # Fallback to the original generate_fixed_source function
     return generate_fixed_source(result)
 
-# %% ../nbs/03_autofix.ipynb 30
+# %% ../nbs/03_autofix.ipynb 31
 def fix_notebook_with_conversion(
     nb_path: Path,  # Path to notebook to fix
     dry_run: bool = False,  # If True, show changes without saving
