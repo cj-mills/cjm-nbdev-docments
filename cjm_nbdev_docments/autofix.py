@@ -5,6 +5,7 @@
 # %% auto 0
 __all__ = ['find_signature_boundaries', 'split_parameters', 'parse_single_line_signature', 'generate_param_todo_comment',
            'generate_return_todo_comment', 'build_fixed_single_line_function', 'fix_multi_line_signature',
+           'fix_class_definition', 'insert_function_docstring', 'fix_single_line_function', 'fix_multi_line_function',
            'generate_fixed_source', 'fix_notebook']
 
 # %% ../nbs/03_autofix.ipynb 3
@@ -118,8 +119,7 @@ def generate_param_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify documentation"
 
-
-#| export
+# %% ../nbs/03_autofix.ipynb 8
 def generate_return_todo_comment(
     result: DocmentsCheckResult,  # Check result with type hint and doc info
     existing_comment: str = ""  # Existing comment text (without #)
@@ -148,8 +148,7 @@ def generate_return_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify description"
 
-
-#| export
+# %% ../nbs/03_autofix.ipynb 9
 def build_fixed_single_line_function(
     parsed: dict,  # Parsed signature components
     params: List[str],  # Individual parameter strings
@@ -229,7 +228,7 @@ def build_fixed_single_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 8
+# %% ../nbs/03_autofix.ipynb 10
 def fix_multi_line_signature(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Start of function definition
@@ -294,53 +293,158 @@ def fix_multi_line_signature(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 9
+# %% ../nbs/03_autofix.ipynb 11
+def fix_class_definition(
+    result: DocmentsCheckResult  # Check result with non-compliant class
+) -> str:  # Fixed source code with class docstring
+    "Fix a class definition by adding a docstring if missing"
+    lines = result.source.split('\n')
+    fixed_lines = []
+    
+    # Find the class definition line
+    class_line_idx = -1
+    for i, line in enumerate(lines):
+        if line.strip().startswith('class '):
+            class_line_idx = i
+            break
+    
+    if class_line_idx == -1:
+        return result.source
+    
+    # Add lines up to and including the class definition
+    for i in range(class_line_idx + 1):
+        fixed_lines.append(lines[i])
+    
+    # If missing docstring, add it after the class definition
+    if not result.has_docstring:
+        # Find the indentation of the first line after class definition
+        indent = ''
+        if class_line_idx + 1 < len(lines):
+            next_line = lines[class_line_idx + 1]
+            # Match leading whitespace
+            indent_match = re.match(r'^(\s*)', next_line)
+            if indent_match:
+                indent = indent_match.group(1)
+            else:
+                # Default to 4 spaces if can't determine
+                indent = '    '
+        else:
+            indent = '    '
+        
+        fixed_lines.append(f'{indent}"TODO: Add class description"')
+    
+    # Add the rest of the class body
+    for i in range(class_line_idx + 1, len(lines)):
+        fixed_lines.append(lines[i])
+    
+    return '\n'.join(fixed_lines)
+
+# %% ../nbs/03_autofix.ipynb 12
+def insert_function_docstring(
+    lines: List[str],  # Fixed function lines
+    def_line_idx: int,  # Index of function definition line
+    indent: str  # Base indentation for the function
+) -> List[str]:  # Lines with docstring inserted
+    "Insert a TODO docstring after the function signature"
+    # Find the signature end (last line before function body)
+    sig_end_idx = def_line_idx
+    for i in range(def_line_idx, len(lines)):
+        if lines[i].rstrip().endswith(':'):
+            sig_end_idx = i
+            break
+    
+    # Insert docstring after signature
+    result_lines = []
+    for i in range(sig_end_idx + 1):
+        result_lines.append(lines[i])
+    
+    # Add the docstring
+    docstring_indent = indent + '    '
+    result_lines.append(f'{docstring_indent}"TODO: Add function description"')
+    
+    # Add the rest of the function body
+    for i in range(sig_end_idx + 1, len(lines)):
+        result_lines.append(lines[i])
+    
+    return result_lines
+
+# %% ../nbs/03_autofix.ipynb 13
+def fix_single_line_function(
+    lines: List[str],  # All source lines
+    def_line_idx: int,  # Index of function definition line
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Fixed lines for the function
+    "Fix a single-line function signature by converting to multi-line with parameter comments"
+    # Parse the signature
+    parsed = parse_single_line_signature(lines[def_line_idx])
+    if not parsed:
+        return lines
+    
+    # Split parameters
+    params = split_parameters(parsed['params_str'])
+    
+    # Build the fixed function signature
+    fixed_signature_lines = build_fixed_single_line_function(parsed, params, result)
+    
+    # Combine with rest of function
+    fixed_lines = []
+    # Add lines before the function
+    for i in range(def_line_idx):
+        fixed_lines.append(lines[i])
+    
+    # Add the fixed signature
+    fixed_lines.extend(fixed_signature_lines)
+    
+    # Add docstring if missing
+    if not result.has_docstring:
+        fixed_lines = insert_function_docstring(fixed_lines, def_line_idx, parsed['indent'])
+    
+    # Add lines after the function definition
+    for i in range(def_line_idx + 1, len(lines)):
+        fixed_lines.append(lines[i])
+    
+    return fixed_lines
+
+# %% ../nbs/03_autofix.ipynb 14
+def fix_multi_line_function(
+    lines: List[str],  # All source lines
+    def_line_idx: int,  # Start of function definition
+    sig_end_idx: int,  # End of function signature
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Fixed lines for the function
+    "Fix a multi-line function signature by adding parameter comments"
+    fixed_lines = []
+    
+    # Add lines before the function
+    for i in range(def_line_idx):
+        fixed_lines.append(lines[i])
+    
+    # Fix the signature
+    signature_lines = fix_multi_line_signature(lines, def_line_idx, sig_end_idx, result)
+    fixed_lines.extend(signature_lines)
+    
+    # Insert docstring if missing
+    if not result.has_docstring:
+        # Find the indentation of the function definition
+        indent_match = re.match(r'^(\s*)', lines[def_line_idx])
+        base_indent = indent_match.group(1) if indent_match else ''
+        docstring_indent = base_indent + '    '
+        fixed_lines.append(f'{docstring_indent}"TODO: Add function description"')
+    
+    # Add rest of function body
+    for i in range(sig_end_idx + 1, len(lines)):
+        fixed_lines.append(lines[i])
+    
+    return fixed_lines
+
+# %% ../nbs/03_autofix.ipynb 15
 def generate_fixed_source(
     result: DocmentsCheckResult  # Check result with non-compliant function
 ) -> str:  # Fixed source code with placeholder documentation
     "Generate fixed source code for a non-compliant function or class"
-    lines = result.source.split('\n')
-    fixed_lines = []
-    
     # Handle classes (including dataclasses)
     if result.type == 'ClassDef':
-        # Find the class definition line
-        class_line_idx = -1
-        for i, line in enumerate(lines):
-            if line.strip().startswith('class '):
-                class_line_idx = i
-                break
-        
-        if class_line_idx == -1:
-            return result.source
-        
-        # Add lines up to and including the class definition
-        for i in range(class_line_idx + 1):
-            fixed_lines.append(lines[i])
-        
-        # If missing docstring, add it after the class definition
-        if not result.has_docstring:
-            # Find the indentation of the first line after class definition
-            indent = ''
-            if class_line_idx + 1 < len(lines):
-                next_line = lines[class_line_idx + 1]
-                # Match leading whitespace
-                indent_match = re.match(r'^(\s*)', next_line)
-                if indent_match:
-                    indent = indent_match.group(1)
-                else:
-                    # Default to 4 spaces if can't determine
-                    indent = '    '
-            else:
-                indent = '    '
-            
-            fixed_lines.append(f'{indent}"TODO: Add class description"')
-        
-        # Add the rest of the class body
-        for i in range(class_line_idx + 1, len(lines)):
-            fixed_lines.append(lines[i])
-        
-        return '\n'.join(fixed_lines)
+        return fix_class_definition(result)
     
     # Function handling - check if we need to fix anything
     needs_fixing = (not result.is_compliant or 
@@ -350,57 +454,25 @@ def generate_fixed_source(
     if not needs_fixing:
         return result.source
     
+    lines = result.source.split('\n')
+    
     # Find the function definition line and signature end
     def_line_idx, sig_end_idx = find_signature_boundaries(lines)
     
     if def_line_idx == -1:
         return result.source
     
-    # For single-line signatures, we need to split and reformat
+    # Choose the appropriate fix method based on signature type
     if def_line_idx == sig_end_idx and (result.missing_params or result.params_missing_type_hints):
-        # Parse the signature
-        parsed = parse_single_line_signature(lines[def_line_idx])
-        if not parsed:
-            return result.source
-        
-        # Split parameters
-        params = split_parameters(parsed['params_str'])
-        
-        # Build the fixed function
-        fixed_lines = build_fixed_single_line_function(parsed, params, result)
-        
-        # Add docstring if missing
-        if not result.has_docstring:
-            fixed_lines.append(f'{parsed["indent"]}    "TODO: Add function description"')
-        
-        # Add rest of function body
-        for i in range(sig_end_idx + 1, len(lines)):
-            fixed_lines.append(lines[i])
+        # Single-line signature that needs parameter fixing
+        fixed_lines = fix_single_line_function(lines, def_line_idx, result)
     else:
-        # Multi-line signature - process line by line
-        # Add lines before the function
-        for i in range(def_line_idx):
-            fixed_lines.append(lines[i])
-        
-        # Fix the signature
-        signature_lines = fix_multi_line_signature(lines, def_line_idx, sig_end_idx, result)
-        fixed_lines.extend(signature_lines)
-        
-        # Insert docstring immediately after signature ends if missing
-        if not result.has_docstring:
-            # Find the indentation of the function definition
-            indent_match = re.match(r'^(\s*)', lines[def_line_idx])
-            base_indent = indent_match.group(1) if indent_match else ''
-            docstring_indent = base_indent + '    '
-            fixed_lines.append(f'{docstring_indent}"TODO: Add function description"')
-        
-        # Add rest of function body
-        for i in range(sig_end_idx + 1, len(lines)):
-            fixed_lines.append(lines[i])
+        # Multi-line signature 
+        fixed_lines = fix_multi_line_function(lines, def_line_idx, sig_end_idx, result)
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 10
+# %% ../nbs/03_autofix.ipynb 16
 def fix_notebook(
     nb_path: Path,  # Path to notebook to fix
     dry_run: bool = False  # If True, show changes without saving
