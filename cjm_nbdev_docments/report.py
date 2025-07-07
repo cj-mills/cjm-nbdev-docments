@@ -73,6 +73,12 @@ def _generate_non_compliant_section(
                         lines.append("     - Missing docstring")
                     if r.missing_params:
                         lines.append(f"     - Missing docs for: {', '.join(r.missing_params)}")
+                    if r.params_missing_type_hints:
+                        missing_type_hints = [p for p in r.params_missing_type_hints if p != 'return']
+                        if missing_type_hints:
+                            lines.append(f"     - Missing type hints for: {', '.join(missing_type_hints)}")
+                        if 'return' in r.params_missing_type_hints:
+                            lines.append("     - Missing return type hint")
     
     return lines
 
@@ -176,7 +182,10 @@ def generate_json_report(
             "params_documented": r.params_documented,
             "return_documented": r.return_documented,
             "has_todos": r.has_todos,
-            "todo_count": r.todo_count
+            "todo_count": r.todo_count,
+            "params_with_type_hints": r.params_with_type_hints,
+            "return_has_type_hint": r.return_has_type_hint,
+            "params_missing_type_hints": r.params_missing_type_hints
         }
         
         if r.is_compliant:

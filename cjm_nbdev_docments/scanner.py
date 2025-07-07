@@ -16,7 +16,7 @@ import re
 
 # %% ../nbs/01_scanner.ipynb 4
 def get_export_cells(
-    nb_path: Path  # Path to the notebook file
+    nb_path: Path    # Path to the notebook file
 ) -> List[Dict[str, Any]]:  # List of cells with export directives
     "Extract all code cells from a notebook that have export directives"
     nb = read_nb(nb_path)

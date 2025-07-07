@@ -4,10 +4,11 @@
 
 # %% auto 0
 __all__ = ['DocmentsCheckResult', 'extract_param_docs', 'check_return_doc', 'count_todos_in_docs', 'check_has_docstring',
-           'check_params_documentation', 'determine_compliance', 'check_definition', 'check_notebook', 'check_function']
+           'check_type_hints', 'check_params_documentation', 'determine_compliance', 'check_definition',
+           'check_notebook', 'check_function']
 
 # %% ../nbs/00_core.ipynb 3
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Callable
 import re
 import ast
 from dataclasses import dataclass
@@ -15,7 +16,7 @@ from dataclasses import dataclass
 # %% ../nbs/00_core.ipynb 4
 @dataclass
 class DocmentsCheckResult:
-    "Result of checking a function/class for docments compliance"
+    "Result of checking a function/class for docments compliance"    
     name: str  # Name of the function/class
     type: str  # Type (FunctionDef, ClassDef, etc.)
     notebook: str  # Source notebook
@@ -27,10 +28,20 @@ class DocmentsCheckResult:
     source: str  # Source code of the definition
     has_todos: bool = False  # Whether it contains TODO placeholders
     todo_count: int = 0  # Number of TODO placeholders found
+    params_with_type_hints: Dict[str, bool] = None  # Which params have type hints
+    return_has_type_hint: bool = False  # Whether return has type hint
+    params_missing_type_hints: List[str] = None  # Parameters missing type hints
+    
+    def __post_init__(self):
+        "TODO: Add function description"
+        if self.params_with_type_hints is None:
+            self.params_with_type_hints = {}
+        if self.params_missing_type_hints is None:
+            self.params_missing_type_hints = []
 
 # %% ../nbs/00_core.ipynb 5
 def extract_param_docs(
-    source: str  # Function source code
+    source:str    # Function source code
 ) -> Dict[str, str]:  # Mapping of parameter names to their documentation
     "Extract parameter documentation from function source using docments style"
     param_docs = {}
@@ -54,8 +65,8 @@ def extract_param_docs(
             continue
             
         # Match parameter with inline comment
-        # More flexible regex that handles various spacing
-        param_match = re.match(r'\s*(\w+)(?:\s*:\s*[^#]+)?\s*#\s*(.+)', line)
+        # Flexible regex that handles complex type annotations like Dict[str, Any]
+        param_match = re.match(r'\s*(\w+)(?:[^#]*?)#\s*(.+)', line)
         if param_match:
             param_name = param_match.group(1)
             param_doc = param_match.group(2).strip()
@@ -158,6 +169,40 @@ def check_has_docstring(
     return has_docstring
 
 # %% ../nbs/00_core.ipynb 9
+def check_type_hints(
+    definition: Dict[str, Any]  # Definition dict from scanner
+) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
+    "Check which parameters and return value have type hints"
+    params_with_type_hints = {}
+    missing_type_hints = []
+    return_has_type_hint = False
+    
+    # Only check for functions
+    if definition['type'] in ['FunctionDef', 'AsyncFunctionDef']:
+        # Check each parameter for type hints
+        for arg in definition.get('args', []):
+            param_name = arg['name']
+            if param_name != 'self':  # Skip self parameter
+                has_type_hint = arg.get('annotation') is not None
+                params_with_type_hints[param_name] = has_type_hint
+                if not has_type_hint:
+                    missing_type_hints.append(param_name)
+        
+        # Check return type hint, but skip for special methods that conventionally don't need return annotations
+        function_name = definition.get('name', '')
+        special_methods = ['__init__', '__post_init__', '__enter__', '__exit__', '__del__', '__setattr__', '__delattr__', '__setitem__', '__delitem__']
+        
+        if function_name not in special_methods:
+            return_has_type_hint = definition.get('returns') is not None
+            if not return_has_type_hint:
+                missing_type_hints.append('return')
+        else:
+            # Special methods are considered to have appropriate return type (None)
+            return_has_type_hint = True
+    
+    return params_with_type_hints, missing_type_hints, return_has_type_hint
+
+# %% ../nbs/00_core.ipynb 10
 def check_params_documentation(
     definition: Dict[str, Any],  # Definition dict from scanner
     source: str  # Function source code
@@ -188,7 +233,7 @@ def check_params_documentation(
     
     return params_documented, missing_params, return_documented
 
-# %% ../nbs/00_core.ipynb 10
+# %% ../nbs/00_core.ipynb 11
 def determine_compliance(
     has_docstring: bool,  # Whether definition has a docstring
     params_documented: Dict[str, bool],  # Which params have documentation
@@ -201,7 +246,7 @@ def determine_compliance(
         return_documented
     )
 
-# %% ../nbs/00_core.ipynb 11
+# %% ../nbs/00_core.ipynb 12
 def check_definition(
     definition: Dict[str, Any]  # Definition dict from scanner
 ) -> DocmentsCheckResult:  # Check result with compliance details
@@ -220,6 +265,9 @@ def check_definition(
     # Check parameter and return documentation
     params_documented, missing_params, return_documented = check_params_documentation(definition, source)
     
+    # Check type hints
+    params_with_type_hints, missing_type_hints, return_has_type_hint = check_type_hints(definition)
+    
     # Determine overall compliance
     is_compliant = determine_compliance(has_docstring, params_documented, return_documented)
     
@@ -234,10 +282,13 @@ def check_definition(
         is_compliant=is_compliant,
         source=source,
         has_todos=has_todos,
-        todo_count=todo_count
+        todo_count=todo_count,
+        params_with_type_hints=params_with_type_hints,
+        return_has_type_hint=return_has_type_hint,
+        params_missing_type_hints=missing_type_hints
     )
 
-# %% ../nbs/00_core.ipynb 12
+# %% ../nbs/00_core.ipynb 13
 def check_notebook(
     nb_path: str  # Path to notebook file  
 ) -> None:  # Prints compliance report
@@ -253,9 +304,9 @@ def check_notebook(
     print(f"Checking {nb_path.name}:")
     print(generate_text_report(results, verbose=True))
 
-# %% ../nbs/00_core.ipynb 13
+# %% ../nbs/00_core.ipynb 14
 def check_function(
-    func  # Function object to check
+    func:Callable          # Function object to check
 ) -> DocmentsCheckResult:  # Check result for the function
     "Check a single function for docments compliance"
     import inspect
@@ -296,5 +347,11 @@ def check_function(
             print("   - Missing docstring")
         if result.missing_params:
             print(f"   - Missing docs for: {', '.join(result.missing_params)}")
+        if result.params_missing_type_hints:
+            missing_type_hints = [p for p in result.params_missing_type_hints if p != 'return']
+            if missing_type_hints:
+                print(f"   - Missing type hints for: {', '.join(missing_type_hints)}")
+            if 'return' in result.params_missing_type_hints:
+                print("   - Missing return type hint")
     
     return result
