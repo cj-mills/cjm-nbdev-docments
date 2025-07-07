@@ -13,10 +13,38 @@ from typing import List, Dict, Any, Optional
 import re
 from pathlib import Path
 from execnb.nbio import read_nb, write_nb
+from fastcore.foundation import L
+from fastcore.basics import ifnone, patch, compose
 from .core import DocmentsCheckResult, check_definition
 from .scanner import scan_notebook, get_export_cells
 
 # %% ../nbs/03_autofix.ipynb 4
+@patch
+def needs_fixing(
+    self: DocmentsCheckResult
+) -> bool:  # TODO: Add return description
+    "Check if this definition needs any fixing"
+    return not self.is_compliant or self.missing_params or self.params_missing_type_hints
+
+@patch
+def get_param_name(
+    self: DocmentsCheckResult,
+    param_str: str  # TODO: Add description
+) -> str:  # TODO: Add return description
+    "Extract parameter name from a parameter string"
+    return param_str.split(':', 1)[0].split('=', 1)[0].strip()
+
+@patch 
+def needs_param_fix(
+    self: DocmentsCheckResult,
+    param_name: str  # TODO: Add description
+) -> bool:  # TODO: Add return description
+    "Check if a parameter needs documentation or type hint fixes"
+    needs_doc = param_name in self.missing_params and param_name != 'self'
+    needs_type_hint = param_name in self.params_missing_type_hints and param_name != 'self'
+    return needs_doc or needs_type_hint
+
+# %% ../nbs/03_autofix.ipynb 5
 def find_signature_boundaries(
     lines: List[str]  # Source code lines
 ) -> tuple[int, int]:  # (def_line_idx, sig_end_idx) or (-1, -1) if not found
@@ -41,26 +69,44 @@ def find_signature_boundaries(
                 sig_end_idx = i
                 break
     
-    if def_line_idx is None or sig_end_idx is None:
+    # Use ifnone for cleaner null handling
+    def_line_idx = ifnone(def_line_idx, -1)
+    sig_end_idx = ifnone(sig_end_idx, -1)
+    
+    if def_line_idx == -1 or sig_end_idx == -1:
         return -1, -1
     
     return def_line_idx, sig_end_idx
 
-# %% ../nbs/03_autofix.ipynb 5
+# %% ../nbs/03_autofix.ipynb 6
 def split_parameters(
     params_str: str  # Parameter string from function signature
 ) -> List[str]:  # List of individual parameter strings
     "Split a parameter string into individual parameters, handling nested types"
+    if not params_str.strip():
+        return []
+    
+    # Use a more robust approach for complex nested types
     params = []
     current_param = ''
     paren_depth = 0
+    bracket_depth = 0
+    brace_depth = 0
     
     for char in params_str:
-        if char in '([{':
+        if char == '(':
             paren_depth += 1
-        elif char in ')]}':
+        elif char == ')':
             paren_depth -= 1
-        elif char == ',' and paren_depth == 0:
+        elif char == '[':
+            bracket_depth += 1
+        elif char == ']':
+            bracket_depth -= 1
+        elif char == '{':
+            brace_depth += 1
+        elif char == '}':
+            brace_depth -= 1
+        elif char == ',' and paren_depth == 0 and bracket_depth == 0 and brace_depth == 0:
             params.append(current_param.strip())
             current_param = ''
             continue
@@ -69,9 +115,10 @@ def split_parameters(
     if current_param.strip():
         params.append(current_param.strip())
     
-    return params
+    # Return as L for easier manipulation
+    return L(params).filter()
 
-# %% ../nbs/03_autofix.ipynb 6
+# %% ../nbs/03_autofix.ipynb 7
 def parse_single_line_signature(
     sig_line: str  # Single-line function signature
 ) -> dict:  # Parsed components of the signature
@@ -89,7 +136,7 @@ def parse_single_line_signature(
         'existing_comment': func_match.group(6).strip()
     }
 
-# %% ../nbs/03_autofix.ipynb 7
+# %% ../nbs/03_autofix.ipynb 8
 def generate_param_todo_comment(
     param_name: str,  # Parameter name
     result: DocmentsCheckResult,  # Check result with type hint and doc info
@@ -119,7 +166,7 @@ def generate_param_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify documentation"
 
-# %% ../nbs/03_autofix.ipynb 8
+# %% ../nbs/03_autofix.ipynb 9
 def generate_return_todo_comment(
     result: DocmentsCheckResult,  # Check result with type hint and doc info
     existing_comment: str = ""  # Existing comment text (without #)
@@ -148,7 +195,7 @@ def generate_return_todo_comment(
         # This shouldn't happen if we're being asked to generate a comment
         return existing_comment if existing_comment else "TODO: Verify description"
 
-# %% ../nbs/03_autofix.ipynb 9
+# %% ../nbs/03_autofix.ipynb 10
 def build_fixed_single_line_function(
     parsed: dict,  # Parsed signature components
     params: List[str],  # Individual parameter strings
@@ -163,13 +210,11 @@ def build_fixed_single_line_function(
     
     # Add parameters with comments as needed
     for i, param in enumerate(params):
-        # Check if this parameter needs documentation or type hints
-        param_name = param.split(':', 1)[0].split('=', 1)[0].strip()
+        # Use patch method to get parameter name
+        param_name = result.get_param_name(param)
         
-        needs_doc_fix = param_name in result.missing_params and param_name != 'self'
-        needs_type_hint_fix = param_name in result.params_missing_type_hints and param_name != 'self'
-        
-        if needs_doc_fix or needs_type_hint_fix:
+        # Use patch method to check if needs fixing
+        if result.needs_param_fix(param_name):
             todo_comment = generate_param_todo_comment(param_name, result)
             if i < len(params) - 1:
                 fixed_lines.append(f"{indent}    {param},  # {todo_comment}")
@@ -228,7 +273,7 @@ def build_fixed_single_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 10
+# %% ../nbs/03_autofix.ipynb 11
 def fix_multi_line_signature(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Start of function definition
@@ -293,7 +338,7 @@ def fix_multi_line_signature(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 11
+# %% ../nbs/03_autofix.ipynb 12
 def fix_class_definition(
     result: DocmentsCheckResult  # Check result with non-compliant class
 ) -> str:  # Fixed source code with class docstring
@@ -318,18 +363,12 @@ def fix_class_definition(
     # If missing docstring, add it after the class definition
     if not result.has_docstring:
         # Find the indentation of the first line after class definition
-        indent = ''
+        indent = '    '  # Default
         if class_line_idx + 1 < len(lines):
             next_line = lines[class_line_idx + 1]
             # Match leading whitespace
             indent_match = re.match(r'^(\s*)', next_line)
-            if indent_match:
-                indent = indent_match.group(1)
-            else:
-                # Default to 4 spaces if can't determine
-                indent = '    '
-        else:
-            indent = '    '
+            indent = ifnone(indent_match.group(1) if indent_match else None, '    ')
         
         fixed_lines.append(f'{indent}"TODO: Add class description"')
     
@@ -339,7 +378,7 @@ def fix_class_definition(
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 12
+# %% ../nbs/03_autofix.ipynb 13
 def insert_function_docstring(
     lines: List[str],  # Fixed function lines
     def_line_idx: int,  # Index of function definition line
@@ -368,7 +407,7 @@ def insert_function_docstring(
     
     return result_lines
 
-# %% ../nbs/03_autofix.ipynb 13
+# %% ../nbs/03_autofix.ipynb 14
 def fix_single_line_function(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Index of function definition line
@@ -405,7 +444,7 @@ def fix_single_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 14
+# %% ../nbs/03_autofix.ipynb 15
 def fix_multi_line_function(
     lines: List[str],  # All source lines
     def_line_idx: int,  # Start of function definition
@@ -437,7 +476,7 @@ def fix_multi_line_function(
     
     return fixed_lines
 
-# %% ../nbs/03_autofix.ipynb 15
+# %% ../nbs/03_autofix.ipynb 16
 def generate_fixed_source(
     result: DocmentsCheckResult  # Check result with non-compliant function
 ) -> str:  # Fixed source code with placeholder documentation
@@ -446,12 +485,8 @@ def generate_fixed_source(
     if result.type == 'ClassDef':
         return fix_class_definition(result)
     
-    # Function handling - check if we need to fix anything
-    needs_fixing = (not result.is_compliant or 
-                   result.missing_params or 
-                   result.params_missing_type_hints)
-    
-    if not needs_fixing:
+    # Use the patch method to check if fixing is needed
+    if not result.needs_fixing():
         return result.source
     
     lines = result.source.split('\n')
@@ -472,7 +507,7 @@ def generate_fixed_source(
     
     return '\n'.join(fixed_lines)
 
-# %% ../nbs/03_autofix.ipynb 16
+# %% ../nbs/03_autofix.ipynb 17
 def fix_notebook(
     nb_path: Path,  # Path to notebook to fix
     dry_run: bool = False  # If True, show changes without saving

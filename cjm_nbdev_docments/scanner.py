@@ -9,6 +9,7 @@ __all__ = ['get_export_cells', 'extract_definitions', 'scan_notebook', 'scan_pro
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 import ast
+import importlib
 from execnb.nbio import read_nb
 from fastcore.basics import AttrDict
 from nbdev.config import get_config
@@ -100,6 +101,27 @@ def scan_notebook(
         for defn in definitions:
             defn['notebook'] = nb_path.name
             defn['cell_id'] = cell['cell_id']
+            
+            # Try to get the actual function object from exported module
+            try:
+                # Get the module name from the notebook name
+                module_name = nb_path.stem
+                if module_name.startswith('0'):
+                    # Handle numbered notebooks like 00_core -> core
+                    module_name = module_name.split('_', 1)[1] if '_' in module_name else module_name
+                
+                # Import the module
+                module = importlib.import_module(f'cjm_nbdev_docments.{module_name}')
+                
+                # Get the function/class object
+                if hasattr(module, defn['name']):
+                    defn['func_obj'] = getattr(module, defn['name'])
+                else:
+                    defn['func_obj'] = None
+                    
+            except Exception:
+                defn['func_obj'] = None
+            
             all_definitions.append(defn)
     
     return all_definitions
