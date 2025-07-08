@@ -202,6 +202,26 @@ Detailed documentation for each module in the project:
 
 > Core functionality for checking docments compliance
 
+#### Import
+
+``` python
+from cjm-nbdev-docments.core import (
+    DocmentsCheckResult,
+    extract_param_docs_from_func,
+    extract_param_docs,
+    check_return_doc,
+    count_todos_in_docs,
+    check_has_docstring_from_func,
+    check_has_docstring,
+    check_type_hints,
+    check_params_documentation,
+    determine_compliance,
+    check_definition,
+    check_notebook,
+    check_function
+)
+```
+
 #### Functions
 
 ``` python
@@ -300,11 +320,37 @@ def check_function(
 class DocmentsCheckResult:
     "Result of checking a function/class for docments compliance"
     
+    name: str  # Name of the function/class
+    type: str  # Type (FunctionDef, ClassDef, etc.)
+    notebook: str  # Source notebook
+    has_docstring: bool  # Whether it has a docstring
+    params_documented: Dict[str, bool]  # Which params have documentation
+    return_documented: bool  # Whether return is documented
+    missing_params: List[str]  # Parameters missing documentation
+    is_compliant: bool  # Overall compliance status
+    source: str  # Source code of the definition
+    has_todos: bool = False  # Whether it contains TODO placeholders
+    todo_count: int = 0  # Number of TODO placeholders found
+    params_with_type_hints: Dict[str, bool]  # Which params have type hints
+    return_has_type_hint: bool = False  # Whether return has type hint
+    params_missing_type_hints: List[str]  # Parameters missing type hints
+    
 ```
 
 ### Scanner (`01_scanner.ipynb`)
 
 > Scan nbdev notebooks for exported functions and classes
+
+#### Import
+
+``` python
+from cjm-nbdev-docments.scanner import (
+    get_export_cells,
+    extract_definitions,
+    scan_notebook,
+    scan_project
+)
+```
 
 #### Functions
 
@@ -340,6 +386,16 @@ def scan_project(
 ### Report Generator (`02_report.ipynb`)
 
 > Generate compliance reports for docments validation
+
+#### Import
+
+``` python
+from cjm-nbdev-docments.report import (
+    check_project,
+    generate_text_report,
+    generate_json_report
+)
+```
 
 #### Functions
 
@@ -399,6 +455,38 @@ def generate_json_report(
 ### Auto-Fix (`03_autofix.ipynb`)
 
 > Automatically add placeholder documentation to non-compliant functions
+
+#### Import
+
+``` python
+from cjm-nbdev-docments.autofix import (
+    find_signature_boundaries,
+    split_parameters,
+    parse_single_line_signature,
+    generate_param_todo_comment,
+    generate_return_todo_comment,
+    build_fixed_single_line_function,
+    fix_multi_line_signature,
+    fix_class_definition,
+    insert_function_docstring,
+    fix_single_line_function,
+    fix_multi_line_function,
+    generate_fixed_source,
+    fix_notebook,
+    DocstringInfo,
+    detect_docstring_style,
+    parse_google_docstring,
+    parse_numpy_docstring,
+    parse_sphinx_docstring,
+    extract_docstring_info,
+    convert_to_docments_format,
+    convert_single_line_to_docments,
+    convert_multiline_to_docments,
+    replace_docstring_in_body,
+    generate_fixed_source_with_conversion,
+    fix_notebook_with_conversion
+)
+```
 
 #### Functions
 
@@ -633,6 +721,18 @@ class DocstringInfo(NamedTuple):
 ### CLI Interface (`04_cli.ipynb`)
 
 > Command-line interface for docments compliance checking
+
+#### Import
+
+``` python
+from cjm-nbdev-docments.cli import (
+    create_parser,
+    handle_autofix,
+    generate_report,
+    output_report,
+    main
+)
+```
 
 #### Functions
 
