@@ -196,59 +196,480 @@ The tool checks for:
 
 ## Module Overview
 
-The package consists of five main modules:
+Detailed documentation for each module in the project:
 
-### 1. **Core** (`cjm_nbdev_docments.core`)
+### Core (`00_core.ipynb`)
 
-Core functionality for checking docments compliance. This module
-provides: -
-[`DocmentsCheckResult`](https://cj-mills.github.io/cjm-nbdev-docments/core.html#docmentscheckresult):
-Data class for storing compliance check results -
-[`check_definition`](https://cj-mills.github.io/cjm-nbdev-docments/core.html#check_definition):
-Check a function/class for compliance -
-[`check_function`](https://cj-mills.github.io/cjm-nbdev-docments/core.html#check_function):
-Check a single function object -
-[`check_notebook`](https://cj-mills.github.io/cjm-nbdev-docments/core.html#check_notebook):
-Check all definitions in a notebook
+> Core functionality for checking docments compliance
 
-### 2. **Scanner** (`cjm_nbdev_docments.scanner`)
+#### Functions
 
-Scans nbdev notebooks for exported functions and classes. Key
-functions: -
-[`scan_notebook`](https://cj-mills.github.io/cjm-nbdev-docments/scanner.html#scan_notebook):
-Extract all exported definitions from a notebook -
-[`scan_project`](https://cj-mills.github.io/cjm-nbdev-docments/scanner.html#scan_project):
-Scan all notebooks in an nbdev project -
-[`get_export_cells`](https://cj-mills.github.io/cjm-nbdev-docments/scanner.html#get_export_cells):
-Find cells with nbdev export directives
+``` python
+def extract_param_docs_from_func(
+    func: Callable    # Function object to extract docs from
+) -> Dict[str, str]:  # Mapping of parameter names to their documentation
+    "Extract parameter documentation from function object using fastcore.docments"
+```
 
-### 3. **Report** (`cjm_nbdev_docments.report`)
+``` python
+def extract_param_docs(
+    source:str    # Function source code
+) -> Dict[str, str]:  # Mapping of parameter names to their documentation
+    "Extract parameter documentation from function source using docments style (fallback)"
+```
 
-Generates compliance reports for docments validation. Provides: -
-[`check_project`](https://cj-mills.github.io/cjm-nbdev-docments/report.html#check_project):
-Check all definitions in a project -
-[`generate_text_report`](https://cj-mills.github.io/cjm-nbdev-docments/report.html#generate_text_report):
-Create human-readable compliance reports -
-[`generate_json_report`](https://cj-mills.github.io/cjm-nbdev-docments/report.html#generate_json_report):
-Create machine-readable JSON reports
+``` python
+def check_return_doc(
+    source: str  # Function source code
+) -> bool:  # Whether return is documented
+    "Check if function has return documentation"
+```
 
-### 4. **Autofix** (`cjm_nbdev_docments.autofix`)
+``` python
+def count_todos_in_docs(
+    source: str,  # Function/class source code
+    name: str  # Name of the function/class for AST parsing
+) -> Tuple[int, bool]:  # (todo_count, has_todos)
+    "Count TODO placeholders only in documentation (docstring, param docs, return docs)"
+```
 
-Automatically adds placeholder documentation to non-compliant functions.
-Features: - `fix_notebook`: Add TODO placeholders for missing
-documentation - `generate_fixed_source`: Generate corrected source
-code - Docstring conversion from Google/NumPy/Sphinx to docments format
+``` python
+def check_has_docstring_from_func(
+    func: Callable  # Function object to check
+) -> bool:  # Whether the function has a docstring
+    "Check if a function has a docstring using fastcore.docments"
+```
 
-### 5. **CLI** (`cjm_nbdev_docments.cli`)
+``` python
+def check_has_docstring(
+    source: str,  # Function/class source code
+    name: str  # Name of the function/class
+) -> bool:  # Whether the definition has a docstring
+    "Check if a function/class has a docstring using AST parsing (fallback)"
+```
 
-Command-line interface for docments compliance checking. The
-`nbdev-docments` command provides easy access to all functionality.
+``` python
+def check_type_hints(
+    definition: Dict[str, Any]  # Definition dict from scanner
+) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
+    "Check which parameters and return value have type hints"
+```
 
-## Documentation
+``` python
+def check_params_documentation(
+    definition: Dict[str, Any],  # Definition dict from scanner
+    source: str  # Function source code
+) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_documented, missing_params, return_documented)
+    "Check parameter and return documentation for a function"
+```
 
-Documentation can be found hosted on this GitHub
-[repository](https://github.com/cj-mills/cjm-nbdev-docments)’s
-[pages](https://cj-mills.github.io/cjm-nbdev-docments/). Additionally
-you can find package manager specific guidelines on
-[conda](https://anaconda.org/cj-mills/cjm-nbdev-docments) and
-[pypi](https://pypi.org/project/cjm-nbdev-docments/) respectively.
+``` python
+def determine_compliance(
+    has_docstring: bool,  # Whether definition has a docstring
+    params_documented: Dict[str, bool],  # Which params have documentation
+    return_documented: bool  # Whether return is documented
+) -> bool:  # Overall compliance status
+    "Determine if a definition is compliant based on documentation checks"
+```
+
+``` python
+def check_definition(
+    definition: Dict[str, Any]  # Definition dict from scanner
+) -> DocmentsCheckResult:  # Check result with compliance details
+    "Check a function/class definition for docments compliance"
+```
+
+``` python
+def check_notebook(
+    nb_path: str  # Path to notebook file  
+) -> None:  # Prints compliance report
+    "Check a specific notebook for docments compliance"
+```
+
+``` python
+def check_function(
+    func:Callable          # Function object to check
+) -> DocmentsCheckResult:  # Check result for the function
+    "Check a single function for docments compliance"
+```
+
+#### Classes
+
+``` python
+@dataclass
+class DocmentsCheckResult:
+    "Result of checking a function/class for docments compliance"
+    
+```
+
+### Scanner (`01_scanner.ipynb`)
+
+> Scan nbdev notebooks for exported functions and classes
+
+#### Functions
+
+``` python
+def get_export_cells(
+    nb_path: Path    # Path to the notebook file
+) -> List[Dict[str, Any]]:  # List of cells with export directives
+    "Extract all code cells from a notebook that have export directives"
+```
+
+``` python
+def extract_definitions(
+    source: str  # Python source code
+) -> List[Dict[str, Any]]:  # List of function/class definitions with metadata
+    "Extract function and class definitions from source code"
+```
+
+``` python
+def scan_notebook(
+    nb_path: Path  # Path to the notebook to scan
+) -> List[Dict[str, Any]]:  # List of exported definitions with metadata
+    "Scan a notebook and extract all exported function/class definitions"
+```
+
+``` python
+def scan_project(
+    nbs_path: Optional[Path] = None,  # Path to notebooks directory (defaults to config.nbs_path)
+    pattern: str = "*.ipynb"  # Pattern for notebook files to scan
+) -> List[Dict[str, Any]]:  # All exported definitions found in the project
+    "Scan all notebooks in a project for exported definitions"
+```
+
+### Report Generator (`02_report.ipynb`)
+
+> Generate compliance reports for docments validation
+
+#### Functions
+
+``` python
+def check_project(
+    nbs_path: Optional[Path] = None  # Path to notebooks directory
+) -> List[DocmentsCheckResult]:  # List of check results for all definitions
+    "Check all exported definitions in a project for docments compliance"
+```
+
+``` python
+def _generate_summary_stats(
+    results: List[DocmentsCheckResult]  # Check results to summarize
+) -> List[str]:  # Lines of summary statistics
+    "Generate summary statistics section of the report"
+```
+
+``` python
+def _generate_non_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of non-compliant section
+    "Generate non-compliant definitions section of the report"
+```
+
+``` python
+def _generate_todos_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of TODOs section
+    "Generate TODO placeholders section of the report"
+```
+
+``` python
+def _generate_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of compliant section
+    "Generate compliant definitions section of the report"
+```
+
+``` python
+def generate_text_report(
+    results: List[DocmentsCheckResult],  # Check results from check_project
+    verbose: bool = False  # Include detailed information
+) -> str:  # Formatted text report
+    "Generate a human-readable text report of compliance results"
+```
+
+``` python
+def generate_json_report(
+    results: List[DocmentsCheckResult]  # Check results from check_project
+) -> Dict[str, Any]:  # JSON-serializable report data
+    "Generate a JSON report of compliance results"
+```
+
+### Auto-Fix (`03_autofix.ipynb`)
+
+> Automatically add placeholder documentation to non-compliant functions
+
+#### Functions
+
+``` python
+@patch
+def needs_fixing(
+    self: DocmentsCheckResult
+) -> bool:  # TODO: Add return description
+    "Check if this definition needs any fixing"
+```
+
+``` python
+@patch
+def get_param_name(
+    self: DocmentsCheckResult,
+    param_str: str  # TODO: Add description
+) -> str:  # TODO: Add return description
+    "Extract parameter name from a parameter string"
+```
+
+``` python
+@patch
+def needs_param_fix(
+    self: DocmentsCheckResult,
+    param_name: str  # TODO: Add description
+) -> bool:  # TODO: Add return description
+    "Check if a parameter needs documentation or type hint fixes"
+```
+
+``` python
+def find_signature_boundaries(
+    lines: List[str]  # Source code lines
+) -> tuple[int, int]:  # (def_line_idx, sig_end_idx) or (-1, -1) if not found
+    "Find the start and end lines of a function signature"
+```
+
+``` python
+def split_parameters(
+    params_str: str  # Parameter string from function signature
+) -> List[str]:  # List of individual parameter strings
+    "Split a parameter string into individual parameters, handling nested types"
+```
+
+``` python
+def parse_single_line_signature(
+    sig_line: str  # Single-line function signature
+) -> dict:  # Parsed components of the signature
+    "Parse a single-line function signature into its components"
+```
+
+``` python
+def generate_param_todo_comment(
+    param_name: str,  # Parameter name
+    result: DocmentsCheckResult,  # Check result with type hint and doc info
+    existing_comment: str = ""  # Existing comment text (without #)
+) -> str:  # TODO comment to add
+    "Generate appropriate TODO comment for a parameter based on what's missing"
+```
+
+``` python
+def generate_return_todo_comment(
+    result: DocmentsCheckResult,  # Check result with type hint and doc info
+    existing_comment: str = ""  # Existing comment text (without #)
+) -> str:  # TODO comment to add
+    "Generate appropriate TODO comment for return value based on what's missing"
+```
+
+``` python
+def build_fixed_single_line_function(
+    parsed: dict,  # Parsed signature components
+    params: List[str],  # Individual parameter strings
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Lines of fixed function signature
+    "Build a fixed single-line function with documentation comments"
+```
+
+``` python
+def fix_multi_line_signature(
+    lines: List[str],  # All source lines
+    def_line_idx: int,  # Start of function definition
+    sig_end_idx: int,  # End of function signature
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Fixed lines for the signature portion
+    "Fix a multi-line function signature by adding parameter comments"
+```
+
+``` python
+def fix_class_definition(
+    result: DocmentsCheckResult  # Check result with non-compliant class
+) -> str:  # Fixed source code with class docstring
+    "Fix a class definition by adding a docstring if missing"
+```
+
+``` python
+def insert_function_docstring(
+    lines: List[str],  # Fixed function lines
+    def_line_idx: int,  # Index of function definition line
+    indent: str  # Base indentation for the function
+) -> List[str]:  # Lines with docstring inserted
+    "Insert a TODO docstring after the function signature"
+```
+
+``` python
+def fix_single_line_function(
+    lines: List[str],  # All source lines
+    def_line_idx: int,  # Index of function definition line
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Fixed lines for the function
+    "Fix a single-line function signature by converting to multi-line with parameter comments"
+```
+
+``` python
+def fix_multi_line_function(
+    lines: List[str],  # All source lines
+    def_line_idx: int,  # Start of function definition
+    sig_end_idx: int,  # End of function signature
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Fixed lines for the function
+    "Fix a multi-line function signature by adding parameter comments"
+```
+
+``` python
+def generate_fixed_source(
+    result: DocmentsCheckResult  # Check result with non-compliant function
+) -> str:  # Fixed source code with placeholder documentation
+    "Generate fixed source code for a non-compliant function or class"
+```
+
+``` python
+def fix_notebook(
+    nb_path: Path,  # Path to notebook to fix
+    dry_run: bool = False  # If True, show changes without saving
+) -> Dict[str, Any]:  # Summary of changes made
+    "Fix non-compliant functions in a notebook by adding placeholder documentation"
+```
+
+``` python
+def detect_docstring_style(
+    docstring: str  # Docstring text to analyze
+) -> str:  # Detected style: 'google', 'numpy', 'sphinx', 'docments', or 'unknown'
+    "Detect the style of a docstring"
+```
+
+``` python
+def parse_google_docstring(
+    docstring: str  # Google-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a Google-style docstring"
+```
+
+``` python
+def parse_numpy_docstring(
+    docstring: str  # NumPy-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a NumPy-style docstring"
+```
+
+``` python
+def parse_sphinx_docstring(
+    docstring: str  # Sphinx-style docstring text
+) -> DocstringInfo:  # Parsed docstring information
+    "Parse a Sphinx-style docstring"
+```
+
+``` python
+def extract_docstring_info(
+    source: str,  # Function source code
+    name: str  # Function name
+) -> Optional[DocstringInfo]:  # Extracted docstring information or None
+    "Extract docstring information from function source code"
+```
+
+``` python
+def convert_to_docments_format(
+    source: str,  # Original function source code
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> str:  # Converted source code in docments format
+    "Convert function source to docments format using extracted docstring info"
+```
+
+``` python
+def convert_single_line_to_docments(
+    sig_line: str,  # Single-line function signature
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Multi-line signature with docments comments
+    "Convert single-line function signature to multi-line docments format"
+```
+
+``` python
+def convert_multiline_to_docments(
+    sig_lines: List[str],  # Multi-line function signature
+    docstring_info: DocstringInfo,  # Extracted docstring information
+    result: DocmentsCheckResult  # Check result with missing params info
+) -> List[str]:  # Multi-line signature with docments comments
+    "Convert multi-line function signature to docments format"
+```
+
+``` python
+def replace_docstring_in_body(
+    body_lines: List[str],  # Function body lines
+    description: str,  # New description to use
+    def_line: str  # Function definition line for indentation
+) -> List[str]:  # Modified body lines
+    "Replace the docstring in function body with a simple description"
+```
+
+``` python
+def generate_fixed_source_with_conversion(
+    result: DocmentsCheckResult  # Check result with non-compliant function
+) -> str:  # Fixed source code with converted documentation
+    "Generate fixed source code, converting existing docstrings to docments format if possible"
+```
+
+``` python
+def fix_notebook_with_conversion(
+    nb_path: Path,  # Path to notebook to fix
+    dry_run: bool = False,  # If True, show changes without saving
+    convert_docstrings: bool = True  # If True, convert existing docstrings to docments format
+) -> Dict[str, Any]:  # Summary of changes made
+    "Fix non-compliant functions in a notebook, optionally converting docstrings to docments format"
+```
+
+#### Classes
+
+``` python
+class DocstringInfo(NamedTuple):
+    "Information extracted from a docstring"
+```
+
+### CLI Interface (`04_cli.ipynb`)
+
+> Command-line interface for docments compliance checking
+
+#### Functions
+
+``` python
+def create_parser(
+) -> argparse.ArgumentParser:  # TODO: Add return description
+    "Create and configure the argument parser for docments CLI"
+```
+
+``` python
+def handle_autofix(
+    args: argparse.Namespace  # Parsed command line arguments
+) -> int:  # Exit code
+    "Handle auto-fix mode for non-compliant functions"
+```
+
+``` python
+def generate_report(
+    results: list,  # Check results from check_project
+    format: str,  # Output format ("text" or "json")
+    verbose: bool = False  # Whether to show compliant definitions
+) -> str:  # Generated report as string
+    "Generate a report in the specified format"
+```
+
+``` python
+def output_report(
+    report: str,  # Report content to output
+    output_path: Optional[Path] = None,  # File path to save report to
+    quiet: bool = False  # Whether to suppress output
+) -> None:  # TODO: Add return description
+    "Output the report to console or file"
+```
+
+``` python
+def main(
+    args: Optional[list] = None  # Command line arguments (for testing)
+) -> int:  # Exit code (0 for success, 1 for non-compliance)
+    "Main CLI entry point for docments checker"
+```
