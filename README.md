@@ -205,7 +205,7 @@ Detailed documentation for each module in the project:
 #### Import
 
 ``` python
-from cjm-nbdev-docments.core import (
+from cjm_nbdev_docments.core import (
     DocmentsCheckResult,
     extract_param_docs_from_func,
     extract_param_docs,
@@ -344,7 +344,7 @@ class DocmentsCheckResult:
 #### Import
 
 ``` python
-from cjm-nbdev-docments.scanner import (
+from cjm_nbdev_docments.scanner import (
     get_export_cells,
     extract_definitions,
     scan_notebook,
@@ -390,7 +390,7 @@ def scan_project(
 #### Import
 
 ``` python
-from cjm-nbdev-docments.report import (
+from cjm_nbdev_docments.report import (
     check_project,
     generate_text_report,
     generate_json_report
@@ -459,7 +459,7 @@ def generate_json_report(
 #### Import
 
 ``` python
-from cjm-nbdev-docments.autofix import (
+from cjm_nbdev_docments.autofix import (
     find_signature_boundaries,
     split_parameters,
     parse_single_line_signature,
@@ -725,7 +725,7 @@ class DocstringInfo(NamedTuple):
 #### Import
 
 ``` python
-from cjm-nbdev-docments.cli import (
+from cjm_nbdev_docments.cli import (
     create_parser,
     handle_autofix,
     generate_report,
