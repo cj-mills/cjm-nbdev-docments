@@ -442,7 +442,8 @@ def fix_single_line_function(
     
     # Add docstring if missing
     if not result.has_docstring:
-        fixed_lines = insert_function_docstring(fixed_lines, def_line_idx, parsed['indent'])
+        docstring_indent = parsed['indent'] + '    '
+        fixed_lines.append(f'{docstring_indent}"TODO: Add function description"')
     
     # Add lines after the function definition
     for i in range(def_line_idx + 1, len(lines)):
@@ -468,8 +469,19 @@ def fix_multi_line_function(
     signature_lines = fix_multi_line_signature(lines, def_line_idx, sig_end_idx, result)
     fixed_lines.extend(signature_lines)
     
-    # Insert docstring if missing
-    if not result.has_docstring:
+    # Check if the function already has a docstring by looking at the first non-empty line after signature
+    has_existing_docstring = False
+    if sig_end_idx + 1 < len(lines):
+        for i in range(sig_end_idx + 1, len(lines)):
+            line_stripped = lines[i].strip()
+            if line_stripped:  # First non-empty line
+                # Check if it's a docstring
+                if line_stripped.startswith(('"""', "'''", '"', "'")):
+                    has_existing_docstring = True
+                break
+    
+    # Insert docstring if missing AND not already present
+    if not result.has_docstring and not has_existing_docstring:
         # Find the indentation of the function definition
         indent_match = re.match(r'^(\s*)', lines[def_line_idx])
         base_indent = indent_match.group(1) if indent_match else ''
@@ -967,7 +979,7 @@ def convert_multiline_to_docments(
             
             if param_doc:
                 # Use the extracted documentation
-                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {param_doc}")
+                fixed_lines.append(f"{indent}{param_name}{type_annotation}last{trailing_punct}{trailing_space}  # {param_doc}")
             elif param_name in result.missing_params:
                 # No documentation found, add TODO
                 todo_comment = generate_param_todo_comment(param_name, result, existing_comment)
