@@ -343,6 +343,10 @@ def check_notebook(
     from cjm_nbdev_docments.report import generate_text_report
     
     nb_path = Path(nb_path)
+    # If it's a relative path, resolve it to an absolute path
+    if not nb_path.is_absolute():
+        nb_path = nb_path.resolve()
+    
     definitions = scan_notebook(nb_path)
     results = [check_definition(defn) for defn in definitions]
     

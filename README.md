@@ -370,7 +370,8 @@ def extract_definitions(
 
 ``` python
 def scan_notebook(
-    nb_path: Path  # Path to the notebook to scan
+    nb_path: Path,  # Path to the notebook to scan
+    nbs_root: Optional[Path] = None  # Root notebooks directory (for relative paths)
 ) -> List[Dict[str, Any]]:  # List of exported definitions with metadata
     "Scan a notebook and extract all exported function/class definitions"
 ```

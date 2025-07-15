@@ -90,7 +90,8 @@ def extract_definitions(
 
 # %% ../nbs/01_scanner.ipynb 6
 def scan_notebook(
-    nb_path: Path  # Path to the notebook to scan
+    nb_path: Path,  # Path to the notebook to scan
+    nbs_root: Optional[Path] = None  # Root notebooks directory (for relative paths)
 ) -> List[Dict[str, Any]]:  # List of exported definitions with metadata
     "Scan a notebook and extract all exported function/class definitions"
     export_cells = get_export_cells(nb_path)
@@ -99,7 +100,15 @@ def scan_notebook(
     for cell in export_cells:
         definitions = extract_definitions(cell['source'])
         for defn in definitions:
-            defn['notebook'] = nb_path.name
+            # If nbs_root is provided, use it; otherwise get from config
+            if nbs_root is None:
+                cfg = get_config()
+                nbs_root = Path(cfg.config_path) / cfg.nbs_path
+            
+            # Store relative path from nbs directory for nested folders
+            relative_path = nb_path.relative_to(nbs_root)
+            
+            defn['notebook'] = str(relative_path)  # Store full relative path
             defn['cell_id'] = cell['cell_id']
             
             # Try to get the actual function object from exported module
@@ -110,8 +119,18 @@ def scan_notebook(
                     # Handle numbered notebooks like 00_core -> core
                     module_name = module_name.split('_', 1)[1] if '_' in module_name else module_name
                 
+                # Build module path including subdirectories
+                module_parts = ['cjm_nbdev_docments']
+                
+                # Add subdirectory parts if notebook is in a subdirectory
+                if relative_path.parent != Path('.'):
+                    module_parts.extend(relative_path.parent.parts)
+                
+                module_parts.append(module_name)
+                full_module_name = '.'.join(module_parts)
+                
                 # Import the module
-                module = importlib.import_module(f'cjm_nbdev_docments.{module_name}')
+                module = importlib.import_module(full_module_name)
                 
                 # Get the function/class object
                 if hasattr(module, defn['name']):
@@ -139,10 +158,13 @@ def scan_project(
     nbs_path = Path(nbs_path)
     all_definitions = []
     
-    for nb_path in nbs_path.glob(pattern):
-        if not nb_path.name.startswith('_'):  # Skip private notebooks
+    # Use rglob to recursively find notebooks in subdirectories
+    for nb_path in nbs_path.rglob(pattern):
+        # Skip private notebooks and those in .ipynb_checkpoints
+        if not nb_path.name.startswith('_') and '.ipynb_checkpoints' not in str(nb_path):
             try:
-                definitions = scan_notebook(nb_path)
+                # Pass the nbs_path to scan_notebook so it knows the root
+                definitions = scan_notebook(nb_path, nbs_root=nbs_path)
                 all_definitions.extend(definitions)
             except Exception as e:
                 print(f"Error scanning {nb_path}: {e}")

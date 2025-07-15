@@ -130,10 +130,11 @@ def handle_autofix(
     else:
         fix_function = fix_notebook
     
-    # Fix all notebooks
+    # Fix all notebooks (including in subdirectories)
     total_fixed = 0
-    for nb_path in nbs_path.glob("*.ipynb"):
-        if not nb_path.name.startswith('_'):
+    for nb_path in nbs_path.rglob("*.ipynb"):
+        # Skip private notebooks and those in .ipynb_checkpoints
+        if not nb_path.name.startswith('_') and '.ipynb_checkpoints' not in str(nb_path):
             try:
                 changes = fix_function(nb_path, args.dry_run)
                 total_fixed += len(changes['definitions_fixed'])
