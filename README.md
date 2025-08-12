@@ -173,26 +173,90 @@ The tool checks for:
     - Identifies documentation with TODO placeholders
     - Helps track documentation debt
 
+## Project Structure
+
+    nbs/
+    ├── 00_core.ipynb    # Core functionality for checking docments compliance
+    ├── 01_scanner.ipynb # Scan nbdev notebooks for exported functions and classes
+    ├── 02_report.ipynb  # Generate compliance reports for docments validation
+    ├── 03_autofix.ipynb # Automatically add placeholder documentation to non-compliant functions
+    └── 04_cli.ipynb     # Command-line interface for docments compliance checking
+
+Total: 5 notebooks
+
+## Module Dependencies
+
+``` mermaid
+graph LR
+    core[core<br/>Core]
+    scanner[scanner<br/>Scanner]
+    report[report<br/>Report Generator]
+    autofix[autofix<br/>Auto-Fix]
+    cli[cli<br/>CLI Interface]
+
+    report --> core
+    report --> scanner
+    autofix --> core
+    autofix --> scanner
+    cli --> report
+```
+
+*5 cross-module dependencies detected*
+
 ## CLI Reference
 
-    nbdev-docments [OPTIONS]
+### `nbdev-docments` Command
 
-    Options:
-      --nbs-path PATH           Path to notebooks directory (defaults to nbdev config)
-      --format {text,json}      Output format (default: text)
-      --output, -o PATH         Save report to file instead of printing
-      --verbose, -v             Show compliant definitions in text report
-      --quiet, -q               Only show summary (exit code indicates compliance)
-      --todos-only              Show only functions with TODO placeholders
-      --fix                     Auto-fix non-compliant functions by adding placeholder docs
-      --convert-docstrings      Convert existing Google/NumPy/Sphinx docstrings to docments format
-      --dry-run                 Show what would be fixed without making changes
-      -h, --help                Show help message and exit
+    usage: nbdev-docments [-h] [--nbs-path NBS_PATH] [--format {text,json}]
+                          [--output OUTPUT] [--verbose] [--quiet] [--todos-only]
+                          [--fix] [--convert-docstrings] [--dry-run]
 
-### Exit Codes
+    Check nbdev project for docments compliance
 
-- `0`: All checked definitions are compliant
-- `1`: One or more definitions are non-compliant
+    options:
+      -h, --help            show this help message and exit
+      --nbs-path NBS_PATH   Path to notebooks directory (defaults to nbdev config)
+      --format {text,json}  Output format (default: text)
+      --output OUTPUT, -o OUTPUT
+                            Save report to file instead of printing
+      --verbose, -v         Show compliant definitions in text report
+      --quiet, -q           Only show summary (exit code indicates compliance)
+      --todos-only          Show only functions with TODO placeholders
+      --fix                 Auto-fix non-compliant functions by adding placeholder
+                            docs
+      --convert-docstrings  Convert existing Google/NumPy/Sphinx docstrings to
+                            docments format (use with --fix)
+      --dry-run             Show what would be fixed without making changes
+
+    Examples:
+      # Check current project
+      nbdev-docments
+      
+      # Check specific notebooks directory
+      nbdev-docments --nbs-path ./notebooks
+      
+      # Generate JSON report
+      nbdev-docments --format json
+      
+      # Save report to file
+      nbdev-docments --output report.txt
+      
+      # Show all definitions (including compliant ones)
+      nbdev-docments --verbose
+      
+      # Show only functions with TODO placeholders
+      nbdev-docments --todos-only
+      
+      # Auto-fix non-compliant functions
+      nbdev-docments --fix
+      
+      # Auto-fix with docstring conversion
+      nbdev-docments --fix --convert-docstrings
+      
+      # Preview fixes without applying
+      nbdev-docments --fix --dry-run
+
+For detailed help on any command, use `nbdev-docments <command> --help`.
 
 ## Module Overview
 
@@ -205,21 +269,7 @@ Detailed documentation for each module in the project:
 #### Import
 
 ``` python
-from cjm_nbdev_docments.core import (
-    DocmentsCheckResult,
-    extract_param_docs_from_func,
-    extract_param_docs,
-    check_return_doc,
-    count_todos_in_docs,
-    check_has_docstring_from_func,
-    check_has_docstring,
-    check_type_hints,
-    check_params_documentation,
-    determine_compliance,
-    check_definition,
-    check_notebook,
-    check_function
-)
+# No corresponding Python module found for 00_core
 ```
 
 #### Functions
@@ -269,8 +319,17 @@ def check_has_docstring(
 ```
 
 ``` python
+def function_has_return_value(
+    source: str,  # Function source code
+    name: str  # Function name
+) -> bool:  # Whether function has explicit return statements with values
+    "Check if a function actually returns a value (not just implicit None)"
+```
+
+``` python
 def check_type_hints(
-    definition: Dict[str, Any]  # Definition dict from scanner
+    definition: Dict[str, Any],  # Definition dict from scanner
+    source: Optional[str] = None  # Function source code (optional)
 ) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
     "Check which parameters and return value have type hints"
 ```
@@ -344,12 +403,7 @@ class DocmentsCheckResult:
 #### Import
 
 ``` python
-from cjm_nbdev_docments.scanner import (
-    get_export_cells,
-    extract_definitions,
-    scan_notebook,
-    scan_project
-)
+# No corresponding Python module found for 01_scanner
 ```
 
 #### Functions
@@ -391,11 +445,7 @@ def scan_project(
 #### Import
 
 ``` python
-from cjm_nbdev_docments.report import (
-    check_project,
-    generate_text_report,
-    generate_json_report
-)
+# No corresponding Python module found for 02_report
 ```
 
 #### Functions
@@ -460,33 +510,7 @@ def generate_json_report(
 #### Import
 
 ``` python
-from cjm_nbdev_docments.autofix import (
-    find_signature_boundaries,
-    split_parameters,
-    parse_single_line_signature,
-    generate_param_todo_comment,
-    generate_return_todo_comment,
-    build_fixed_single_line_function,
-    fix_multi_line_signature,
-    fix_class_definition,
-    insert_function_docstring,
-    fix_single_line_function,
-    fix_multi_line_function,
-    generate_fixed_source,
-    fix_notebook,
-    DocstringInfo,
-    detect_docstring_style,
-    parse_google_docstring,
-    parse_numpy_docstring,
-    parse_sphinx_docstring,
-    extract_docstring_info,
-    convert_to_docments_format,
-    convert_single_line_to_docments,
-    convert_multiline_to_docments,
-    replace_docstring_in_body,
-    generate_fixed_source_with_conversion,
-    fix_notebook_with_conversion
-)
+# No corresponding Python module found for 03_autofix
 ```
 
 #### Functions
@@ -726,13 +750,7 @@ class DocstringInfo(NamedTuple):
 #### Import
 
 ``` python
-from cjm_nbdev_docments.cli import (
-    create_parser,
-    handle_autofix,
-    generate_report,
-    output_report,
-    main
-)
+# No corresponding Python module found for 04_cli
 ```
 
 #### Functions

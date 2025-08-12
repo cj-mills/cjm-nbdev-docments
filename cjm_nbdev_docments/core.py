@@ -4,8 +4,8 @@
 
 # %% auto 0
 __all__ = ['DocmentsCheckResult', 'extract_param_docs_from_func', 'extract_param_docs', 'check_return_doc', 'count_todos_in_docs',
-           'check_has_docstring_from_func', 'check_has_docstring', 'check_type_hints', 'check_params_documentation',
-           'determine_compliance', 'check_definition', 'check_notebook', 'check_function']
+           'check_has_docstring_from_func', 'check_has_docstring', 'function_has_return_value', 'check_type_hints',
+           'check_params_documentation', 'determine_compliance', 'check_definition', 'check_notebook', 'check_function']
 
 # %% ../nbs/00_core.ipynb 3
 from typing import Dict, List, Any, Optional, Tuple, Callable
@@ -197,8 +197,41 @@ def check_has_docstring(
     return has_docstring
 
 # %% ../nbs/00_core.ipynb 11
+def function_has_return_value(
+    source: str,  # Function source code
+    name: str  # Function name
+) -> bool:  # Whether function has explicit return statements with values
+    "Check if a function actually returns a value (not just implicit None)"
+    try:
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name == name:
+                    # Walk through the function body looking for return statements
+                    for body_node in ast.walk(node):
+                        if isinstance(body_node, ast.Return):
+                            # Check if return has a value (not just 'return' or 'return None')
+                            if body_node.value is not None:
+                                # Check if it's not explicitly returning None
+                                if isinstance(body_node.value, ast.Constant):
+                                    if body_node.value.value is not None:
+                                        return True
+                                elif isinstance(body_node.value, ast.NameConstant):
+                                    if body_node.value.value is not None:
+                                        return True
+                                else:
+                                    # Any other return value (variable, expression, etc.)
+                                    return True
+                    break
+    except:
+        pass
+    
+    return False
+
+# %% ../nbs/00_core.ipynb 12
 def check_type_hints(
-    definition: Dict[str, Any]  # Definition dict from scanner
+    definition: Dict[str, Any],  # Definition dict from scanner
+    source: Optional[str] = None  # Function source code (optional)
 ) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
     "Check which parameters and return value have type hints"
     params_with_type_hints = {}
@@ -222,15 +255,23 @@ def check_type_hints(
         
         if function_name not in special_methods:
             return_has_type_hint = definition.get('returns') is not None
+            
+            # Only flag missing return type hint if function actually returns a value
             if not return_has_type_hint:
-                missing_type_hints.append('return')
+                # Check if function actually returns something
+                if source and function_has_return_value(source, function_name):
+                    missing_type_hints.append('return')
+                # If no source provided, use the definition's source if available
+                elif not source and 'source' in definition:
+                    if function_has_return_value(definition['source'], function_name):
+                        missing_type_hints.append('return')
         else:
             # Special methods are considered to have appropriate return type (None)
             return_has_type_hint = True
     
     return params_with_type_hints, missing_type_hints, return_has_type_hint
 
-# %% ../nbs/00_core.ipynb 12
+# %% ../nbs/00_core.ipynb 13
 def check_params_documentation(
     definition: Dict[str, Any],  # Definition dict from scanner
     source: str  # Function source code
@@ -271,7 +312,7 @@ def check_params_documentation(
     
     return params_documented, missing_params, return_documented
 
-# %% ../nbs/00_core.ipynb 13
+# %% ../nbs/00_core.ipynb 14
 def determine_compliance(
     has_docstring: bool,  # Whether definition has a docstring
     params_documented: Dict[str, bool],  # Which params have documentation
@@ -284,7 +325,7 @@ def determine_compliance(
         return_documented
     )
 
-# %% ../nbs/00_core.ipynb 14
+# %% ../nbs/00_core.ipynb 15
 def check_definition(
     definition: Dict[str, Any]  # Definition dict from scanner
 ) -> DocmentsCheckResult:  # Check result with compliance details
@@ -310,8 +351,8 @@ def check_definition(
     # Check parameter and return documentation
     params_documented, missing_params, return_documented = check_params_documentation(definition, source)
     
-    # Check type hints
-    params_with_type_hints, missing_type_hints, return_has_type_hint = check_type_hints(definition)
+    # Check type hints - pass the source code for return value detection
+    params_with_type_hints, missing_type_hints, return_has_type_hint = check_type_hints(definition, source)
     
     # Determine overall compliance
     is_compliant = determine_compliance(has_docstring, params_documented, return_documented)
@@ -333,7 +374,7 @@ def check_definition(
         params_missing_type_hints=missing_type_hints
     )
 
-# %% ../nbs/00_core.ipynb 15
+# %% ../nbs/00_core.ipynb 16
 def check_notebook(
     nb_path: str  # Path to notebook file  
 ) -> None:  # Prints compliance report
@@ -353,7 +394,7 @@ def check_notebook(
     print(f"Checking {nb_path.name}:")
     print(generate_text_report(results, verbose=True))
 
-# %% ../nbs/00_core.ipynb 16
+# %% ../nbs/00_core.ipynb 17
 def check_function(
     func:Callable          # Function object to check
 ) -> DocmentsCheckResult:  # Check result for the function
