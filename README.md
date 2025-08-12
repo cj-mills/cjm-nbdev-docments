@@ -176,11 +176,11 @@ The tool checks for:
 ## Project Structure
 
     nbs/
-    ├── 00_core.ipynb    # Core functionality for checking docments compliance
-    ├── 01_scanner.ipynb # Scan nbdev notebooks for exported functions and classes
-    ├── 02_report.ipynb  # Generate compliance reports for docments validation
-    ├── 03_autofix.ipynb # Automatically add placeholder documentation to non-compliant functions
-    └── 04_cli.ipynb     # Command-line interface for docments compliance checking
+    ├── autofix.ipynb # Automatically add placeholder documentation to non-compliant functions
+    ├── cli.ipynb     # Command-line interface for docments compliance checking
+    ├── core.ipynb    # Core functionality for checking docments compliance
+    ├── report.ipynb  # Generate compliance reports for docments validation
+    └── scanner.ipynb # Scan nbdev notebooks for exported functions and classes
 
 Total: 5 notebooks
 
@@ -188,17 +188,17 @@ Total: 5 notebooks
 
 ``` mermaid
 graph LR
-    core[core<br/>Core]
-    scanner[scanner<br/>Scanner]
-    report[report<br/>Report Generator]
     autofix[autofix<br/>Auto-Fix]
     cli[cli<br/>CLI Interface]
+    core[core<br/>Core]
+    report[report<br/>Report Generator]
+    scanner[scanner<br/>Scanner]
 
-    report --> core
-    report --> scanner
     autofix --> core
     autofix --> scanner
     cli --> report
+    report --> core
+    report --> scanner
 ```
 
 *5 cross-module dependencies detected*
@@ -262,255 +262,40 @@ For detailed help on any command, use `nbdev-docments <command> --help`.
 
 Detailed documentation for each module in the project:
 
-### Core (`00_core.ipynb`)
-
-> Core functionality for checking docments compliance
-
-#### Import
-
-``` python
-# No corresponding Python module found for 00_core
-```
-
-#### Functions
-
-``` python
-def extract_param_docs_from_func(
-    func: Callable    # Function object to extract docs from
-) -> Dict[str, str]:  # Mapping of parameter names to their documentation
-    "Extract parameter documentation from function object using fastcore.docments"
-```
-
-``` python
-def extract_param_docs(
-    source:str    # Function source code
-) -> Dict[str, str]:  # Mapping of parameter names to their documentation
-    "Extract parameter documentation from function source using docments style (fallback)"
-```
-
-``` python
-def check_return_doc(
-    source: str  # Function source code
-) -> bool:  # Whether return is documented
-    "Check if function has return documentation"
-```
-
-``` python
-def count_todos_in_docs(
-    source: str,  # Function/class source code
-    name: str  # Name of the function/class for AST parsing
-) -> Tuple[int, bool]:  # (todo_count, has_todos)
-    "Count TODO placeholders only in documentation (docstring, param docs, return docs)"
-```
-
-``` python
-def check_has_docstring_from_func(
-    func: Callable  # Function object to check
-) -> bool:  # Whether the function has a docstring
-    "Check if a function has a docstring using fastcore.docments"
-```
-
-``` python
-def check_has_docstring(
-    source: str,  # Function/class source code
-    name: str  # Name of the function/class
-) -> bool:  # Whether the definition has a docstring
-    "Check if a function/class has a docstring using AST parsing (fallback)"
-```
-
-``` python
-def function_has_return_value(
-    source: str,  # Function source code
-    name: str  # Function name
-) -> bool:  # Whether function has explicit return statements with values
-    "Check if a function actually returns a value (not just implicit None)"
-```
-
-``` python
-def check_type_hints(
-    definition: Dict[str, Any],  # Definition dict from scanner
-    source: Optional[str] = None  # Function source code (optional)
-) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
-    "Check which parameters and return value have type hints"
-```
-
-``` python
-def check_params_documentation(
-    definition: Dict[str, Any],  # Definition dict from scanner
-    source: str  # Function source code
-) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_documented, missing_params, return_documented)
-    "Check parameter and return documentation for a function"
-```
-
-``` python
-def determine_compliance(
-    has_docstring: bool,  # Whether definition has a docstring
-    params_documented: Dict[str, bool],  # Which params have documentation
-    return_documented: bool  # Whether return is documented
-) -> bool:  # Overall compliance status
-    "Determine if a definition is compliant based on documentation checks"
-```
-
-``` python
-def check_definition(
-    definition: Dict[str, Any]  # Definition dict from scanner
-) -> DocmentsCheckResult:  # Check result with compliance details
-    "Check a function/class definition for docments compliance"
-```
-
-``` python
-def check_notebook(
-    nb_path: str  # Path to notebook file  
-) -> None:  # Prints compliance report
-    "Check a specific notebook for docments compliance"
-```
-
-``` python
-def check_function(
-    func:Callable          # Function object to check
-) -> DocmentsCheckResult:  # Check result for the function
-    "Check a single function for docments compliance"
-```
-
-#### Classes
-
-``` python
-@dataclass
-class DocmentsCheckResult:
-    "Result of checking a function/class for docments compliance"
-    
-    name: str  # Name of the function/class
-    type: str  # Type (FunctionDef, ClassDef, etc.)
-    notebook: str  # Source notebook
-    has_docstring: bool  # Whether it has a docstring
-    params_documented: Dict[str, bool]  # Which params have documentation
-    return_documented: bool  # Whether return is documented
-    missing_params: List[str]  # Parameters missing documentation
-    is_compliant: bool  # Overall compliance status
-    source: str  # Source code of the definition
-    has_todos: bool = False  # Whether it contains TODO placeholders
-    todo_count: int = 0  # Number of TODO placeholders found
-    params_with_type_hints: Dict[str, bool]  # Which params have type hints
-    return_has_type_hint: bool = False  # Whether return has type hint
-    params_missing_type_hints: List[str]  # Parameters missing type hints
-    
-```
-
-### Scanner (`01_scanner.ipynb`)
-
-> Scan nbdev notebooks for exported functions and classes
-
-#### Import
-
-``` python
-# No corresponding Python module found for 01_scanner
-```
-
-#### Functions
-
-``` python
-def get_export_cells(
-    nb_path: Path    # Path to the notebook file
-) -> List[Dict[str, Any]]:  # List of cells with export directives
-    "Extract all code cells from a notebook that have export directives"
-```
-
-``` python
-def extract_definitions(
-    source: str  # Python source code
-) -> List[Dict[str, Any]]:  # List of function/class definitions with metadata
-    "Extract function and class definitions from source code"
-```
-
-``` python
-def scan_notebook(
-    nb_path: Path,  # Path to the notebook to scan
-    nbs_root: Optional[Path] = None  # Root notebooks directory (for relative paths)
-) -> List[Dict[str, Any]]:  # List of exported definitions with metadata
-    "Scan a notebook and extract all exported function/class definitions"
-```
-
-``` python
-def scan_project(
-    nbs_path: Optional[Path] = None,  # Path to notebooks directory (defaults to config.nbs_path)
-    pattern: str = "*.ipynb"  # Pattern for notebook files to scan
-) -> List[Dict[str, Any]]:  # All exported definitions found in the project
-    "Scan all notebooks in a project for exported definitions"
-```
-
-### Report Generator (`02_report.ipynb`)
-
-> Generate compliance reports for docments validation
-
-#### Import
-
-``` python
-# No corresponding Python module found for 02_report
-```
-
-#### Functions
-
-``` python
-def check_project(
-    nbs_path: Optional[Path] = None  # Path to notebooks directory
-) -> List[DocmentsCheckResult]:  # List of check results for all definitions
-    "Check all exported definitions in a project for docments compliance"
-```
-
-``` python
-def _generate_summary_stats(
-    results: List[DocmentsCheckResult]  # Check results to summarize
-) -> List[str]:  # Lines of summary statistics
-    "Generate summary statistics section of the report"
-```
-
-``` python
-def _generate_non_compliant_section(
-    results: List[DocmentsCheckResult],  # Check results
-    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
-) -> List[str]:  # Lines of non-compliant section
-    "Generate non-compliant definitions section of the report"
-```
-
-``` python
-def _generate_todos_section(
-    results: List[DocmentsCheckResult],  # Check results
-    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
-) -> List[str]:  # Lines of TODOs section
-    "Generate TODO placeholders section of the report"
-```
-
-``` python
-def _generate_compliant_section(
-    results: List[DocmentsCheckResult],  # Check results
-    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
-) -> List[str]:  # Lines of compliant section
-    "Generate compliant definitions section of the report"
-```
-
-``` python
-def generate_text_report(
-    results: List[DocmentsCheckResult],  # Check results from check_project
-    verbose: bool = False  # Include detailed information
-) -> str:  # Formatted text report
-    "Generate a human-readable text report of compliance results"
-```
-
-``` python
-def generate_json_report(
-    results: List[DocmentsCheckResult]  # Check results from check_project
-) -> Dict[str, Any]:  # JSON-serializable report data
-    "Generate a JSON report of compliance results"
-```
-
-### Auto-Fix (`03_autofix.ipynb`)
+### Auto-Fix (`autofix.ipynb`)
 
 > Automatically add placeholder documentation to non-compliant functions
 
 #### Import
 
 ``` python
-# No corresponding Python module found for 03_autofix
+from cjm_nbdev_docments.autofix import (
+    find_signature_boundaries,
+    split_parameters,
+    parse_single_line_signature,
+    generate_param_todo_comment,
+    generate_return_todo_comment,
+    build_fixed_single_line_function,
+    fix_multi_line_signature,
+    fix_class_definition,
+    insert_function_docstring,
+    fix_single_line_function,
+    fix_multi_line_function,
+    generate_fixed_source,
+    fix_notebook,
+    DocstringInfo,
+    detect_docstring_style,
+    parse_google_docstring,
+    parse_numpy_docstring,
+    parse_sphinx_docstring,
+    extract_docstring_info,
+    convert_to_docments_format,
+    convert_single_line_to_docments,
+    convert_multiline_to_docments,
+    replace_docstring_in_body,
+    generate_fixed_source_with_conversion,
+    fix_notebook_with_conversion
+)
 ```
 
 #### Functions
@@ -743,14 +528,20 @@ class DocstringInfo(NamedTuple):
     "Information extracted from a docstring"
 ```
 
-### CLI Interface (`04_cli.ipynb`)
+### CLI Interface (`cli.ipynb`)
 
 > Command-line interface for docments compliance checking
 
 #### Import
 
 ``` python
-# No corresponding Python module found for 04_cli
+from cjm_nbdev_docments.cli import (
+    create_parser,
+    handle_autofix,
+    generate_report,
+    output_report,
+    main
+)
 ```
 
 #### Functions
@@ -791,4 +582,269 @@ def main(
     args: Optional[list] = None  # Command line arguments (for testing)
 ) -> int:  # Exit code (0 for success, 1 for non-compliance)
     "Main CLI entry point for docments checker"
+```
+
+### Core (`core.ipynb`)
+
+> Core functionality for checking docments compliance
+
+#### Import
+
+``` python
+from cjm_nbdev_docments.core import (
+    DocmentsCheckResult,
+    extract_param_docs_from_func,
+    extract_param_docs,
+    check_return_doc,
+    count_todos_in_docs,
+    check_has_docstring_from_func,
+    check_has_docstring,
+    function_has_return_value,
+    check_type_hints,
+    check_params_documentation,
+    determine_compliance,
+    check_definition,
+    check_notebook,
+    check_function
+)
+```
+
+#### Functions
+
+``` python
+def extract_param_docs_from_func(
+    func: Callable    # Function object to extract docs from
+) -> Dict[str, str]:  # Mapping of parameter names to their documentation
+    "Extract parameter documentation from function object using fastcore.docments"
+```
+
+``` python
+def extract_param_docs(
+    source:str    # Function source code
+) -> Dict[str, str]:  # Mapping of parameter names to their documentation
+    "Extract parameter documentation from function source using docments style (fallback)"
+```
+
+``` python
+def check_return_doc(
+    source: str  # Function source code
+) -> bool:  # Whether return is documented
+    "Check if function has return documentation"
+```
+
+``` python
+def count_todos_in_docs(
+    source: str,  # Function/class source code
+    name: str  # Name of the function/class for AST parsing
+) -> Tuple[int, bool]:  # (todo_count, has_todos)
+    "Count TODO placeholders only in documentation (docstring, param docs, return docs)"
+```
+
+``` python
+def check_has_docstring_from_func(
+    func: Callable  # Function object to check
+) -> bool:  # Whether the function has a docstring
+    "Check if a function has a docstring using fastcore.docments"
+```
+
+``` python
+def check_has_docstring(
+    source: str,  # Function/class source code
+    name: str  # Name of the function/class
+) -> bool:  # Whether the definition has a docstring
+    "Check if a function/class has a docstring using AST parsing (fallback)"
+```
+
+``` python
+def function_has_return_value(
+    source: str,  # Function source code
+    name: str  # Function name
+) -> bool:  # Whether function has explicit return statements with values
+    "Check if a function actually returns a value (not just implicit None)"
+```
+
+``` python
+def check_type_hints(
+    definition: Dict[str, Any],  # Definition dict from scanner
+    source: Optional[str] = None  # Function source code (optional)
+) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_with_type_hints, missing_type_hints, return_has_type_hint)
+    "Check which parameters and return value have type hints"
+```
+
+``` python
+def check_params_documentation(
+    definition: Dict[str, Any],  # Definition dict from scanner
+    source: str  # Function source code
+) -> Tuple[Dict[str, bool], List[str], bool]:  # (params_documented, missing_params, return_documented)
+    "Check parameter and return documentation for a function"
+```
+
+``` python
+def determine_compliance(
+    has_docstring: bool,  # Whether definition has a docstring
+    params_documented: Dict[str, bool],  # Which params have documentation
+    return_documented: bool  # Whether return is documented
+) -> bool:  # Overall compliance status
+    "Determine if a definition is compliant based on documentation checks"
+```
+
+``` python
+def check_definition(
+    definition: Dict[str, Any]  # Definition dict from scanner
+) -> DocmentsCheckResult:  # Check result with compliance details
+    "Check a function/class definition for docments compliance"
+```
+
+``` python
+def check_notebook(
+    nb_path: str  # Path to notebook file  
+) -> None:  # Prints compliance report
+    "Check a specific notebook for docments compliance"
+```
+
+``` python
+def check_function(
+    func:Callable          # Function object to check
+) -> DocmentsCheckResult:  # Check result for the function
+    "Check a single function for docments compliance"
+```
+
+#### Classes
+
+``` python
+@dataclass
+class DocmentsCheckResult:
+    "Result of checking a function/class for docments compliance"
+    
+    name: str  # Name of the function/class
+    type: str  # Type (FunctionDef, ClassDef, etc.)
+    notebook: str  # Source notebook
+    has_docstring: bool  # Whether it has a docstring
+    params_documented: Dict[str, bool]  # Which params have documentation
+    return_documented: bool  # Whether return is documented
+    missing_params: List[str]  # Parameters missing documentation
+    is_compliant: bool  # Overall compliance status
+    source: str  # Source code of the definition
+    has_todos: bool = False  # Whether it contains TODO placeholders
+    todo_count: int = 0  # Number of TODO placeholders found
+    params_with_type_hints: Dict[str, bool]  # Which params have type hints
+    return_has_type_hint: bool = False  # Whether return has type hint
+    params_missing_type_hints: List[str]  # Parameters missing type hints
+    
+```
+
+### Report Generator (`report.ipynb`)
+
+> Generate compliance reports for docments validation
+
+#### Import
+
+``` python
+from cjm_nbdev_docments.report import (
+    check_project,
+    generate_text_report,
+    generate_json_report
+)
+```
+
+#### Functions
+
+``` python
+def check_project(
+    nbs_path: Optional[Path] = None  # Path to notebooks directory
+) -> List[DocmentsCheckResult]:  # List of check results for all definitions
+    "Check all exported definitions in a project for docments compliance"
+```
+
+``` python
+def _generate_summary_stats(
+    results: List[DocmentsCheckResult]  # Check results to summarize
+) -> List[str]:  # Lines of summary statistics
+    "Generate summary statistics section of the report"
+```
+
+``` python
+def _generate_non_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of non-compliant section
+    "Generate non-compliant definitions section of the report"
+```
+
+``` python
+def _generate_todos_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of TODOs section
+    "Generate TODO placeholders section of the report"
+```
+
+``` python
+def _generate_compliant_section(
+    results: List[DocmentsCheckResult],  # Check results
+    by_notebook: Dict[str, List[DocmentsCheckResult]]  # Results grouped by notebook
+) -> List[str]:  # Lines of compliant section
+    "Generate compliant definitions section of the report"
+```
+
+``` python
+def generate_text_report(
+    results: List[DocmentsCheckResult],  # Check results from check_project
+    verbose: bool = False  # Include detailed information
+) -> str:  # Formatted text report
+    "Generate a human-readable text report of compliance results"
+```
+
+``` python
+def generate_json_report(
+    results: List[DocmentsCheckResult]  # Check results from check_project
+) -> Dict[str, Any]:  # JSON-serializable report data
+    "Generate a JSON report of compliance results"
+```
+
+### Scanner (`scanner.ipynb`)
+
+> Scan nbdev notebooks for exported functions and classes
+
+#### Import
+
+``` python
+from cjm_nbdev_docments.scanner import (
+    get_export_cells,
+    extract_definitions,
+    scan_notebook,
+    scan_project
+)
+```
+
+#### Functions
+
+``` python
+def get_export_cells(
+    nb_path: Path    # Path to the notebook file
+) -> List[Dict[str, Any]]:  # List of cells with export directives
+    "Extract all code cells from a notebook that have export directives"
+```
+
+``` python
+def extract_definitions(
+    source: str  # Python source code
+) -> List[Dict[str, Any]]:  # List of function/class definitions with metadata
+    "Extract function and class definitions from source code"
+```
+
+``` python
+def scan_notebook(
+    nb_path: Path,  # Path to the notebook to scan
+    nbs_root: Optional[Path] = None  # Root notebooks directory (for relative paths)
+) -> List[Dict[str, Any]]:  # List of exported definitions with metadata
+    "Scan a notebook and extract all exported function/class definitions"
+```
+
+``` python
+def scan_project(
+    nbs_path: Optional[Path] = None,  # Path to notebooks directory (defaults to config.nbs_path)
+    pattern: str = "*.ipynb"  # Pattern for notebook files to scan
+) -> List[Dict[str, Any]]:  # All exported definitions found in the project
+    "Scan all notebooks in a project for exported definitions"
 ```
