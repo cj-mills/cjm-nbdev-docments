@@ -236,9 +236,13 @@ def build_fixed_single_line_function(
     return_type = parsed['return_type']
     existing_comment = parsed['existing_comment']
     
+    # Check if return type is None (no return value)
+    is_none_return = return_type and 'None' in return_type.strip()
+    
     # For single-line conversions, check if return needs fixing
     if return_type:
-        if 'return' in result.missing_params or 'return' in result.params_missing_type_hints:
+        # Skip adding TODO comments for functions with return type None
+        if not is_none_return and ('return' in result.missing_params or 'return' in result.params_missing_type_hints):
             if existing_comment:
                 # Parse existing comment
                 comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
@@ -249,7 +253,7 @@ def build_fixed_single_line_function(
                 todo_comment = generate_return_todo_comment(result)
                 fixed_lines.append(f"{indent}){return_type}:  # {todo_comment}")
         else:
-            # Return doesn't need fixing
+            # Return doesn't need fixing OR is None type
             if existing_comment:
                 if existing_comment.startswith('#'):
                     fixed_lines.append(f"{indent}){return_type}: {existing_comment}")
@@ -322,23 +326,30 @@ def fix_multi_line_signature(
         else:
             # Check for return type line
             return_match = re.match(r'^(\s*\)\s*->\s*[^:#]+)\s*:\s*(.*)$', line)
-            if return_match and ('return' in result.missing_params or 'return' in result.params_missing_type_hints):
+            if return_match:
                 pre_colon = return_match.group(1)
                 after_colon = return_match.group(2).strip()
                 
-                if after_colon:
-                    # There's already a comment, generate appropriate TODO
-                    comment_text = after_colon[1:].strip() if after_colon.startswith('#') else after_colon
-                    todo_comment = generate_return_todo_comment(result, comment_text)
-                    # Only change if the comment actually changed
-                    if todo_comment != comment_text:
-                        fixed_lines.append(f"{pre_colon}: # {todo_comment}")
+                # Check if return type is None (no return value)
+                is_none_return = 'None' in pre_colon
+                
+                # Skip adding TODO comments for functions with return type None
+                if not is_none_return and ('return' in result.missing_params or 'return' in result.params_missing_type_hints):
+                    if after_colon:
+                        # There's already a comment, generate appropriate TODO
+                        comment_text = after_colon[1:].strip() if after_colon.startswith('#') else after_colon
+                        todo_comment = generate_return_todo_comment(result, comment_text)
+                        # Only change if the comment actually changed
+                        if todo_comment != comment_text:
+                            fixed_lines.append(f"{pre_colon}: # {todo_comment}")
+                        else:
+                            fixed_lines.append(line)
                     else:
-                        fixed_lines.append(line)
+                        # No comment, add full TODO
+                        todo_comment = generate_return_todo_comment(result)
+                        fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
                 else:
-                    # No comment, add full TODO
-                    todo_comment = generate_return_todo_comment(result)
-                    fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+                    fixed_lines.append(line)
             else:
                 fixed_lines.append(line)
     
@@ -938,9 +949,13 @@ def convert_single_line_to_docments(
     
     # Handle return type
     return_type = parsed['return_type']
-    if return_type and docstring_info.returns:
+    
+    # Check if return type is None (no return value)
+    is_none_return = return_type and 'None' in return_type.strip()
+    
+    if return_type and docstring_info.returns and not is_none_return:
         fixed_lines.append(f"{indent}){return_type}:  # {docstring_info.returns}")
-    elif return_type and 'return' in result.missing_params:
+    elif return_type and 'return' in result.missing_params and not is_none_return:
         todo_comment = generate_return_todo_comment(result)
         fixed_lines.append(f"{indent}){return_type}:  # {todo_comment}")
     elif return_type:
@@ -990,15 +1005,21 @@ def convert_multiline_to_docments(
         else:
             # Check for return type line
             return_match = re.match(r'^(\s*\)\s*->\s*[^:#]+)\s*:\s*(.*)$', line)
-            if return_match and docstring_info.returns:
+            if return_match:
                 pre_colon = return_match.group(1)
-                fixed_lines.append(f"{pre_colon}:  # {docstring_info.returns}")
-            elif return_match and 'return' in result.missing_params:
-                pre_colon = return_match.group(1)
-                existing_comment = return_match.group(2).strip()
-                comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
-                todo_comment = generate_return_todo_comment(result, comment_text)
-                fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+                
+                # Check if return type is None (no return value)
+                is_none_return = 'None' in pre_colon
+                
+                if docstring_info.returns and not is_none_return:
+                    fixed_lines.append(f"{pre_colon}:  # {docstring_info.returns}")
+                elif 'return' in result.missing_params and not is_none_return:
+                    existing_comment = return_match.group(2).strip()
+                    comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
+                    todo_comment = generate_return_todo_comment(result, comment_text)
+                    fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+                else:
+                    fixed_lines.append(line)
             else:
                 fixed_lines.append(line)
     
