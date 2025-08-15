@@ -979,7 +979,7 @@ def convert_multiline_to_docments(
             
             if param_doc:
                 # Use the extracted documentation
-                fixed_lines.append(f"{indent}{param_name}{type_annotation}last{trailing_punct}{trailing_space}  # {param_doc}")
+                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {param_doc}")
             elif param_name in result.missing_params:
                 # No documentation found, add TODO
                 todo_comment = generate_param_todo_comment(param_name, result, existing_comment)
