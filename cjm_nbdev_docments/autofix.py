@@ -978,50 +978,72 @@ def convert_multiline_to_docments(
     for i, line in enumerate(sig_lines):
         line_stripped = line.strip()
         
-        # Check if this line contains a parameter
-        param_match = re.match(r'^(\s*)(\w+)(\s*(?::\s*[^,\)#]+)?)\s*([,\)]?)(\s*)(?:#\s*(.*))?$', line)
-        if param_match and i > 0 and i < len(sig_lines) - 1:
-            # This is a parameter line
-            indent = param_match.group(1)
+        # Check if this line contains a parameter (including the last one that might end with ))
+        # Updated regex to handle parameters that end with )) for the last param before return type
+        param_match = re.match(r'^(\s*)(\w+)(\s*(?::\s*[^,\)#]+)?)\s*([,\)]?)(\)?)\s*(?:->\s*[^:#]+)?\s*:?\s*(?:#\s*(.*))?$', line)
+        
+        # Check if it's a parameter line (not the def line)
+        if param_match and i > 0 and param_match.group(2) != 'def':
             param_name = param_match.group(2)
-            type_annotation = param_match.group(3) or ''
-            trailing_punct = param_match.group(4) or ''
-            trailing_space = param_match.group(5) or ''
-            existing_comment = param_match.group(6) or ''
             
-            # Get documentation from the extracted docstring info
-            param_doc = docstring_info.params.get(param_name, '')
-            
-            if param_doc:
-                # Use the extracted documentation
-                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {param_doc}")
-            elif param_name in result.missing_params:
-                # No documentation found, add TODO
-                todo_comment = generate_param_todo_comment(param_name, result, existing_comment)
-                fixed_lines.append(f"{indent}{param_name}{type_annotation}{trailing_punct}{trailing_space}  # {todo_comment}")
-            else:
-                # Keep original
-                fixed_lines.append(line)
-        else:
-            # Check for return type line
-            return_match = re.match(r'^(\s*\)\s*->\s*[^:#]+)\s*:\s*(.*)$', line)
-            if return_match:
-                pre_colon = return_match.group(1)
-                
-                # Check if return type is None (no return value)
-                is_none_return = 'None' in pre_colon
-                
-                if docstring_info.returns and not is_none_return:
-                    fixed_lines.append(f"{pre_colon}:  # {docstring_info.returns}")
-                elif 'return' in result.missing_params and not is_none_return:
+            # Skip if this is actually the return type line
+            if '->' in line and ')' in line:
+                # This is a return type line, handle it separately
+                return_match = re.match(r'^(\s*.*\)\s*->\s*[^:#]+)\s*:\s*(.*)$', line)
+                if return_match:
+                    pre_colon = return_match.group(1)
                     existing_comment = return_match.group(2).strip()
-                    comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
-                    todo_comment = generate_return_todo_comment(result, comment_text)
-                    fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+                    
+                    # Check if return type is None (no return value)
+                    is_none_return = 'None' in pre_colon
+                    
+                    # Check if the existing comment is a TODO comment
+                    is_todo_comment = 'TODO' in existing_comment if existing_comment else False
+                    
+                    if docstring_info.returns and not is_none_return and (not existing_comment or is_todo_comment):
+                        # Replace with extracted return documentation if no comment or it's a TODO
+                        fixed_lines.append(f"{pre_colon}:  # {docstring_info.returns}")
+                    elif 'return' in result.missing_params and not is_none_return:
+                        comment_text = existing_comment[1:].strip() if existing_comment.startswith('#') else existing_comment
+                        todo_comment = generate_return_todo_comment(result, comment_text)
+                        fixed_lines.append(f"{pre_colon}:  # {todo_comment}")
+                    else:
+                        fixed_lines.append(line)
                 else:
                     fixed_lines.append(line)
             else:
-                fixed_lines.append(line)
+                # Regular parameter line
+                indent = param_match.group(1)
+                type_annotation = param_match.group(3) or ''
+                trailing_punct = param_match.group(4) or ''
+                extra_paren = param_match.group(5) or ''
+                existing_comment = param_match.group(6) or ''
+                
+                # Reconstruct the line ending (could be , or ) or ))
+                line_ending = trailing_punct + extra_paren
+                
+                # Get documentation from the extracted docstring info
+                param_doc = docstring_info.params.get(param_name, '')
+                
+                # Check if the existing comment is a TODO comment
+                is_todo_comment = 'TODO' in existing_comment
+                
+                if param_doc and (not existing_comment or is_todo_comment):
+                    # Replace with the extracted documentation if there's no comment or it's a TODO
+                    fixed_lines.append(f"{indent}{param_name}{type_annotation}{line_ending}  # {param_doc}")
+                elif param_doc and existing_comment and not is_todo_comment:
+                    # Keep existing non-TODO comment (it might be manually written documentation)
+                    fixed_lines.append(line)
+                elif param_name in result.missing_params:
+                    # No documentation found in docstring, add TODO
+                    todo_comment = generate_param_todo_comment(param_name, result, existing_comment)
+                    fixed_lines.append(f"{indent}{param_name}{type_annotation}{line_ending}  # {todo_comment}")
+                else:
+                    # Keep original
+                    fixed_lines.append(line)
+        else:
+            # Not a parameter line, could be def line or other
+            fixed_lines.append(line)
     
     return fixed_lines
 

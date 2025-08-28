@@ -203,8 +203,8 @@ graph LR
     autofix --> scanner
     autofix --> core
     cli --> report
-    report --> core
     report --> scanner
+    report --> core
 ```
 
 *5 cross-module dependencies detected*
