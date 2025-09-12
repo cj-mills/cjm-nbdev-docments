@@ -387,7 +387,7 @@ def fix_class_definition(
             indent_match = re.match(r'^(\s*)', next_line)
             indent = ifnone(indent_match.group(1) if indent_match else None, '    ')
         
-        fixed_lines.append(f'{indent}"TODO: Add class description"')
+        fixed_lines.append(f'{indent}"""TODO: Add class description"""')
     
     # Add the rest of the class body
     for i in range(class_line_idx + 1, len(lines)):
@@ -416,7 +416,7 @@ def insert_function_docstring(
     
     # Add the docstring
     docstring_indent = indent + '    '
-    result_lines.append(f'{docstring_indent}"TODO: Add function description"')
+    result_lines.append(f'{docstring_indent}"""TODO: Add function description"""')
     
     # Add the rest of the function body
     for i in range(sig_end_idx + 1, len(lines)):
@@ -454,7 +454,7 @@ def fix_single_line_function(
     # Add docstring if missing
     if not result.has_docstring:
         docstring_indent = parsed['indent'] + '    '
-        fixed_lines.append(f'{docstring_indent}"TODO: Add function description"')
+        fixed_lines.append(f'{docstring_indent}"""TODO: Add function description"""')
     
     # Add lines after the function definition
     for i in range(def_line_idx + 1, len(lines)):
@@ -497,7 +497,7 @@ def fix_multi_line_function(
         indent_match = re.match(r'^(\s*)', lines[def_line_idx])
         base_indent = indent_match.group(1) if indent_match else ''
         docstring_indent = base_indent + '    '
-        fixed_lines.append(f'{docstring_indent}"TODO: Add function description"')
+        fixed_lines.append(f'{docstring_indent}"""TODO: Add function description"""')
     
     # Add rest of function body
     for i in range(sig_end_idx + 1, len(lines)):
@@ -1080,11 +1080,11 @@ def replace_docstring_in_body(
                     (line_stripped.startswith('"') and line_stripped.endswith('"') and len(line_stripped) > 2 and not line_stripped.startswith('"""')) or
                     (line_stripped.startswith("'") and line_stripped.endswith("'") and len(line_stripped) > 2 and not line_stripped.startswith("'''"))):
                     # Single-line docstring
-                    result_lines.append(f'{docstring_indent}"{description}"')
+                    result_lines.append(f'{docstring_indent}"""{description}"""')
                 else:
                     # Start of multi-line docstring
                     in_multiline_docstring = True
-                    result_lines.append(f'{docstring_indent}"{description}"')
+                    result_lines.append(f'{docstring_indent}"""{description}"""')
             else:
                 # Not a docstring, keep the line
                 result_lines.append(line)
@@ -1100,7 +1100,7 @@ def replace_docstring_in_body(
     
     # If no docstring was found, add the description at the beginning
     if not docstring_found:
-        result_lines.insert(0, f'{docstring_indent}"{description}"')
+        result_lines.insert(0, f'{docstring_indent}"""{description}"""')
     
     return result_lines
 

@@ -200,8 +200,8 @@ graph LR
     report[report<br/>Report Generator]
     scanner[scanner<br/>Scanner]
 
-    autofix --> scanner
     autofix --> core
+    autofix --> scanner
     cli --> report
     report --> scanner
     report --> core
