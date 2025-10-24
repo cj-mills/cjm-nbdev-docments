@@ -26,7 +26,7 @@ from .scanner import scan_notebook, get_export_cells
 @patch
 def needs_fixing(
     self: DocmentsCheckResult
-) -> bool:  # TODO: Add return description
+) -> bool:  # Whether the definition needs fixing
     "Check if this definition needs any fixing"
     return not self.is_compliant or self.missing_params or self.params_missing_type_hints
 
@@ -34,17 +34,17 @@ def needs_fixing(
 @patch
 def get_param_name(
     self: DocmentsCheckResult,
-    param_str: str  # TODO: Add description
-) -> str:  # TODO: Add return description
+    param_str: str  # Parameter string (e.g., "x: int" or "y=10")
+) -> str:  # Extracted parameter name
     "Extract parameter name from a parameter string"
     return param_str.split(':', 1)[0].split('=', 1)[0].strip()
 
 # %% ../nbs/autofix.ipynb 6
-@patch 
+@patch
 def needs_param_fix(
     self: DocmentsCheckResult,
-    param_name: str  # TODO: Add description
-) -> bool:  # TODO: Add return description
+    param_name: str  # Name of the parameter to check
+) -> bool:  # Whether the parameter needs fixing
     "Check if a parameter needs documentation or type hint fixes"
     needs_doc = param_name in self.missing_params and param_name != 'self'
     needs_type_hint = param_name in self.params_missing_type_hints and param_name != 'self'

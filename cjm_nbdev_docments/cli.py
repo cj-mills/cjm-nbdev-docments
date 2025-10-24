@@ -16,7 +16,7 @@ from nbdev.config import get_config
 
 # %% ../nbs/cli.ipynb 4
 def create_parser(
-) -> argparse.ArgumentParser:  # TODO: Add return description
+) -> argparse.ArgumentParser:  # Configured argument parser
     "Create and configure the argument parser for docments CLI"
     parser = argparse.ArgumentParser(
         description="Check nbdev project for docments compliance",
@@ -160,7 +160,7 @@ def output_report(
     report: str,  # Report content to output
     output_path: Optional[Path] = None,  # File path to save report to
     quiet: bool = False  # Whether to suppress output
-) -> None:  # TODO: Add return description
+) -> None:
     "Output the report to console or file"
     if not quiet:
         if output_path:

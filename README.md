@@ -203,8 +203,8 @@ graph LR
     autofix --> core
     autofix --> scanner
     cli --> report
-    report --> scanner
     report --> core
+    report --> scanner
 ```
 
 *5 cross-module dependencies detected*
@@ -310,7 +310,7 @@ from cjm_nbdev_docments.autofix import (
 @patch
 def needs_fixing(
     self: DocmentsCheckResult
-) -> bool:  # TODO: Add return description
+) -> bool:  # Whether the definition needs fixing
     "Check if this definition needs any fixing"
 ```
 
@@ -318,8 +318,8 @@ def needs_fixing(
 @patch
 def get_param_name(
     self: DocmentsCheckResult,
-    param_str: str  # TODO: Add description
-) -> str:  # TODO: Add return description
+    param_str: str  # Parameter string (e.g., "x: int" or "y=10")
+) -> str:  # Extracted parameter name
     "Extract parameter name from a parameter string"
 ```
 
@@ -327,8 +327,8 @@ def get_param_name(
 @patch
 def needs_param_fix(
     self: DocmentsCheckResult,
-    param_name: str  # TODO: Add description
-) -> bool:  # TODO: Add return description
+    param_name: str  # Name of the parameter to check
+) -> bool:  # Whether the parameter needs fixing
     "Check if a parameter needs documentation or type hint fixes"
 ```
 
@@ -554,7 +554,7 @@ from cjm_nbdev_docments.cli import (
 
 ``` python
 def create_parser(
-) -> argparse.ArgumentParser:  # TODO: Add return description
+) -> argparse.ArgumentParser:  # Configured argument parser
     "Create and configure the argument parser for docments CLI"
 ```
 
@@ -579,7 +579,7 @@ def output_report(
     report: str,  # Report content to output
     output_path: Optional[Path] = None,  # File path to save report to
     quiet: bool = False  # Whether to suppress output
-) -> None:  # TODO: Add return description
+) -> None
     "Output the report to console or file"
 ```
 
