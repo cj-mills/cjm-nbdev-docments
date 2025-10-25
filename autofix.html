@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Automatically add placeholder documentation to non-compliant functions">
+
+<title>Auto-Fix – cjm-nbdev-docments</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-000f0825b9c55ed21d14970d810c14a9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Auto-Fix – cjm-nbdev-docments">
+<meta property="og:description" content="Automatically add placeholder documentation to non-compliant functions">
+<meta property="og:site_name" content="cjm-nbdev-docments">
+<meta name="twitter:title" content="Auto-Fix – cjm-nbdev-docments">
+<meta name="twitter:description" content="Automatically add placeholder documentation to non-compliant functions">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">cjm-nbdev-docments</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./autofix.html">Auto-Fix</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cjm-nbdev-docments</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./autofix.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Auto-Fix</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cli.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CLI Interface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./report.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Report Generator</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./scanner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Scanner</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#docmentscheckresult.needs_fixing" id="toc-docmentscheckresult.needs_fixing" class="nav-link active" data-scroll-target="#docmentscheckresult.needs_fixing">DocmentsCheckResult.needs_fixing</a></li>
+  <li><a href="#docmentscheckresult.get_param_name" id="toc-docmentscheckresult.get_param_name" class="nav-link" data-scroll-target="#docmentscheckresult.get_param_name">DocmentsCheckResult.get_param_name</a></li>
+  <li><a href="#docmentscheckresult.needs_param_fix" id="toc-docmentscheckresult.needs_param_fix" class="nav-link" data-scroll-target="#docmentscheckresult.needs_param_fix">DocmentsCheckResult.needs_param_fix</a></li>
+  <li><a href="#find_signature_boundaries" id="toc-find_signature_boundaries" class="nav-link" data-scroll-target="#find_signature_boundaries">find_signature_boundaries</a></li>
+  <li><a href="#split_parameters" id="toc-split_parameters" class="nav-link" data-scroll-target="#split_parameters">split_parameters</a></li>
+  <li><a href="#parse_single_line_signature" id="toc-parse_single_line_signature" class="nav-link" data-scroll-target="#parse_single_line_signature">parse_single_line_signature</a></li>
+  <li><a href="#generate_param_todo_comment" id="toc-generate_param_todo_comment" class="nav-link" data-scroll-target="#generate_param_todo_comment">generate_param_todo_comment</a></li>
+  <li><a href="#generate_return_todo_comment" id="toc-generate_return_todo_comment" class="nav-link" data-scroll-target="#generate_return_todo_comment">generate_return_todo_comment</a></li>
+  <li><a href="#build_fixed_single_line_function" id="toc-build_fixed_single_line_function" class="nav-link" data-scroll-target="#build_fixed_single_line_function">build_fixed_single_line_function</a></li>
+  <li><a href="#fix_multi_line_signature" id="toc-fix_multi_line_signature" class="nav-link" data-scroll-target="#fix_multi_line_signature">fix_multi_line_signature</a></li>
+  <li><a href="#fix_class_definition" id="toc-fix_class_definition" class="nav-link" data-scroll-target="#fix_class_definition">fix_class_definition</a></li>
+  <li><a href="#insert_function_docstring" id="toc-insert_function_docstring" class="nav-link" data-scroll-target="#insert_function_docstring">insert_function_docstring</a></li>
+  <li><a href="#fix_single_line_function" id="toc-fix_single_line_function" class="nav-link" data-scroll-target="#fix_single_line_function">fix_single_line_function</a></li>
+  <li><a href="#fix_multi_line_function" id="toc-fix_multi_line_function" class="nav-link" data-scroll-target="#fix_multi_line_function">fix_multi_line_function</a></li>
+  <li><a href="#generate_fixed_source" id="toc-generate_fixed_source" class="nav-link" data-scroll-target="#generate_fixed_source">generate_fixed_source</a></li>
+  <li><a href="#fix_notebook" id="toc-fix_notebook" class="nav-link" data-scroll-target="#fix_notebook">fix_notebook</a></li>
+  <li><a href="#docstringinfo" id="toc-docstringinfo" class="nav-link" data-scroll-target="#docstringinfo">DocstringInfo</a></li>
+  <li><a href="#detect_docstring_style" id="toc-detect_docstring_style" class="nav-link" data-scroll-target="#detect_docstring_style">detect_docstring_style</a></li>
+  <li><a href="#parse_google_docstring" id="toc-parse_google_docstring" class="nav-link" data-scroll-target="#parse_google_docstring">parse_google_docstring</a></li>
+  <li><a href="#parse_numpy_docstring" id="toc-parse_numpy_docstring" class="nav-link" data-scroll-target="#parse_numpy_docstring">parse_numpy_docstring</a></li>
+  <li><a href="#parse_sphinx_docstring" id="toc-parse_sphinx_docstring" class="nav-link" data-scroll-target="#parse_sphinx_docstring">parse_sphinx_docstring</a></li>
+  <li><a href="#extract_docstring_info" id="toc-extract_docstring_info" class="nav-link" data-scroll-target="#extract_docstring_info">extract_docstring_info</a></li>
+  <li><a href="#convert_to_docments_format" id="toc-convert_to_docments_format" class="nav-link" data-scroll-target="#convert_to_docments_format">convert_to_docments_format</a></li>
+  <li><a href="#convert_single_line_to_docments" id="toc-convert_single_line_to_docments" class="nav-link" data-scroll-target="#convert_single_line_to_docments">convert_single_line_to_docments</a></li>
+  <li><a href="#convert_multiline_to_docments" id="toc-convert_multiline_to_docments" class="nav-link" data-scroll-target="#convert_multiline_to_docments">convert_multiline_to_docments</a></li>
+  <li><a href="#replace_docstring_in_body" id="toc-replace_docstring_in_body" class="nav-link" data-scroll-target="#replace_docstring_in_body">replace_docstring_in_body</a></li>
+  <li><a href="#generate_fixed_source_with_conversion" id="toc-generate_fixed_source_with_conversion" class="nav-link" data-scroll-target="#generate_fixed_source_with_conversion">generate_fixed_source_with_conversion</a></li>
+  <li><a href="#fix_notebook_with_conversion" id="toc-fix_notebook_with_conversion" class="nav-link" data-scroll-target="#fix_notebook_with_conversion">fix_notebook_with_conversion</a></li>
+  <li><a href="#testing" id="toc-testing" class="nav-link" data-scroll-target="#testing">Testing</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/cj-mills/cjm-nbdev-docments/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="autofix.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Auto-Fix</h1>
+</div>
+
+<div>
+  <div class="description">
+    Automatically add placeholder documentation to non-compliant functions
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<hr>
+<section id="docmentscheckresult.needs_fixing" class="level3">
+<h3 class="anchored" data-anchor-id="docmentscheckresult.needs_fixing">DocmentsCheckResult.needs_fixing</h3>
+<blockquote class="blockquote">
+<pre><code> DocmentsCheckResult.needs_fixing ()</code></pre>
+</blockquote>
+<p><em>Check if this definition needs any fixing</em></p>
+<hr>
+</section>
+<section id="docmentscheckresult.get_param_name" class="level3">
+<h3 class="anchored" data-anchor-id="docmentscheckresult.get_param_name">DocmentsCheckResult.get_param_name</h3>
+<blockquote class="blockquote">
+<pre><code> DocmentsCheckResult.get_param_name (param_str:str)</code></pre>
+</blockquote>
+<p><em>Extract parameter name from a parameter string</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>param_str</td>
+<td>str</td>
+<td>Parameter string (e.g., “x: int” or “y=10”)</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Extracted parameter name</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="docmentscheckresult.needs_param_fix" class="level3">
+<h3 class="anchored" data-anchor-id="docmentscheckresult.needs_param_fix">DocmentsCheckResult.needs_param_fix</h3>
+<blockquote class="blockquote">
+<pre><code> DocmentsCheckResult.needs_param_fix (param_name:str)</code></pre>
+</blockquote>
+<p><em>Check if a parameter needs documentation or type hint fixes</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>param_name</td>
+<td>str</td>
+<td>Name of the parameter to check</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>bool</strong></td>
+<td><strong>Whether the parameter needs fixing</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="find_signature_boundaries" class="level3">
+<h3 class="anchored" data-anchor-id="find_signature_boundaries">find_signature_boundaries</h3>
+<blockquote class="blockquote">
+<pre><code> find_signature_boundaries (lines:List[str])</code></pre>
+</blockquote>
+<p><em>Find the start and end lines of a function signature</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>lines</td>
+<td>List</td>
+<td>Source code lines</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>tuple</strong></td>
+<td><strong>(def_line_idx, sig_end_idx) or (-1, -1) if not found</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="split_parameters" class="level3">
+<h3 class="anchored" data-anchor-id="split_parameters">split_parameters</h3>
+<blockquote class="blockquote">
+<pre><code> split_parameters (params_str:str)</code></pre>
+</blockquote>
+<p><em>Split a parameter string into individual parameters, handling nested types</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>params_str</td>
+<td>str</td>
+<td>Parameter string from function signature</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>List of individual parameter strings</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="parse_single_line_signature" class="level3">
+<h3 class="anchored" data-anchor-id="parse_single_line_signature">parse_single_line_signature</h3>
+<blockquote class="blockquote">
+<pre><code> parse_single_line_signature (sig_line:str)</code></pre>
+</blockquote>
+<p><em>Parse a single-line function signature into its components</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sig_line</td>
+<td>str</td>
+<td>Single-line function signature</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>dict</strong></td>
+<td><strong>Parsed components of the signature</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="generate_param_todo_comment" class="level3">
+<h3 class="anchored" data-anchor-id="generate_param_todo_comment">generate_param_todo_comment</h3>
+<blockquote class="blockquote">
+<pre><code> generate_param_todo_comment (param_name:str,
+                              result:cjm_nbdev_docments.core.DocmentsCheck
+                              Result, existing_comment:str='')</code></pre>
+</blockquote>
+<p><em>Generate appropriate TODO comment for a parameter based on what’s missing</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 34%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>param_name</td>
+<td>str</td>
+<td></td>
+<td>Parameter name</td>
+</tr>
+<tr class="even">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td></td>
+<td>Check result with type hint and doc info</td>
+</tr>
+<tr class="odd">
+<td>existing_comment</td>
+<td>str</td>
+<td></td>
+<td>Existing comment text (without #)</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td></td>
+<td><strong>TODO comment to add</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="generate_return_todo_comment" class="level3">
+<h3 class="anchored" data-anchor-id="generate_return_todo_comment">generate_return_todo_comment</h3>
+<blockquote class="blockquote">
+<pre><code> generate_return_todo_comment
+                               (result:cjm_nbdev_docments.core.DocmentsChe
+                               ckResult, existing_comment:str='')</code></pre>
+</blockquote>
+<p><em>Generate appropriate TODO comment for return value based on what’s missing</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 34%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td></td>
+<td>Check result with type hint and doc info</td>
+</tr>
+<tr class="even">
+<td>existing_comment</td>
+<td>str</td>
+<td></td>
+<td>Existing comment text (without #)</td>
+</tr>
+<tr class="odd">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td></td>
+<td><strong>TODO comment to add</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="build_fixed_single_line_function" class="level3">
+<h3 class="anchored" data-anchor-id="build_fixed_single_line_function">build_fixed_single_line_function</h3>
+<blockquote class="blockquote">
+<pre><code> build_fixed_single_line_function (parsed:dict, params:List[str],
+                                   result:cjm_nbdev_docments.core.Docments
+                                   CheckResult)</code></pre>
+</blockquote>
+<p><em>Build a fixed single-line function with documentation comments</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>parsed</td>
+<td>dict</td>
+<td>Parsed signature components</td>
+</tr>
+<tr class="even">
+<td>params</td>
+<td>List</td>
+<td>Individual parameter strings</td>
+</tr>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Lines of fixed function signature</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_multi_line_signature" class="level3">
+<h3 class="anchored" data-anchor-id="fix_multi_line_signature">fix_multi_line_signature</h3>
+<blockquote class="blockquote">
+<pre><code> fix_multi_line_signature (lines:List[str], def_line_idx:int,
+                           sig_end_idx:int, result:cjm_nbdev_docments.core
+                           .DocmentsCheckResult)</code></pre>
+</blockquote>
+<p><em>Fix a multi-line function signature by adding parameter comments</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>lines</td>
+<td>List</td>
+<td>All source lines</td>
+</tr>
+<tr class="even">
+<td>def_line_idx</td>
+<td>int</td>
+<td>Start of function definition</td>
+</tr>
+<tr class="odd">
+<td>sig_end_idx</td>
+<td>int</td>
+<td>End of function signature</td>
+</tr>
+<tr class="even">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="odd">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Fixed lines for the signature portion</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_class_definition" class="level3">
+<h3 class="anchored" data-anchor-id="fix_class_definition">fix_class_definition</h3>
+<blockquote class="blockquote">
+<pre><code> fix_class_definition (result:cjm_nbdev_docments.core.DocmentsCheckResult)</code></pre>
+</blockquote>
+<p><em>Fix a class definition by adding a docstring if missing</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with non-compliant class</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Fixed source code with class docstring</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="insert_function_docstring" class="level3">
+<h3 class="anchored" data-anchor-id="insert_function_docstring">insert_function_docstring</h3>
+<blockquote class="blockquote">
+<pre><code> insert_function_docstring (lines:List[str], def_line_idx:int, indent:str)</code></pre>
+</blockquote>
+<p><em>Insert a TODO docstring after the function signature</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>lines</td>
+<td>List</td>
+<td>Fixed function lines</td>
+</tr>
+<tr class="even">
+<td>def_line_idx</td>
+<td>int</td>
+<td>Index of function definition line</td>
+</tr>
+<tr class="odd">
+<td>indent</td>
+<td>str</td>
+<td>Base indentation for the function</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Lines with docstring inserted</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_single_line_function" class="level3">
+<h3 class="anchored" data-anchor-id="fix_single_line_function">fix_single_line_function</h3>
+<blockquote class="blockquote">
+<pre><code> fix_single_line_function (lines:List[str], def_line_idx:int,
+                           result:cjm_nbdev_docments.core.DocmentsCheckRes
+                           ult)</code></pre>
+</blockquote>
+<p><em>Fix a single-line function signature by converting to multi-line with parameter comments</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>lines</td>
+<td>List</td>
+<td>All source lines</td>
+</tr>
+<tr class="even">
+<td>def_line_idx</td>
+<td>int</td>
+<td>Index of function definition line</td>
+</tr>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Fixed lines for the function</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_multi_line_function" class="level3">
+<h3 class="anchored" data-anchor-id="fix_multi_line_function">fix_multi_line_function</h3>
+<blockquote class="blockquote">
+<pre><code> fix_multi_line_function (lines:List[str], def_line_idx:int,
+                          sig_end_idx:int, result:cjm_nbdev_docments.core.
+                          DocmentsCheckResult)</code></pre>
+</blockquote>
+<p><em>Fix a multi-line function signature by adding parameter comments</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>lines</td>
+<td>List</td>
+<td>All source lines</td>
+</tr>
+<tr class="even">
+<td>def_line_idx</td>
+<td>int</td>
+<td>Start of function definition</td>
+</tr>
+<tr class="odd">
+<td>sig_end_idx</td>
+<td>int</td>
+<td>End of function signature</td>
+</tr>
+<tr class="even">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="odd">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Fixed lines for the function</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="generate_fixed_source" class="level3">
+<h3 class="anchored" data-anchor-id="generate_fixed_source">generate_fixed_source</h3>
+<blockquote class="blockquote">
+<pre><code> generate_fixed_source
+                        (result:cjm_nbdev_docments.core.DocmentsCheckResul
+                        t)</code></pre>
+</blockquote>
+<p><em>Generate fixed source code for a non-compliant function or class</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with non-compliant function</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Fixed source code with placeholder documentation</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_notebook" class="level3">
+<h3 class="anchored" data-anchor-id="fix_notebook">fix_notebook</h3>
+<blockquote class="blockquote">
+<pre><code> fix_notebook (nb_path:pathlib.Path, dry_run:bool=False)</code></pre>
+</blockquote>
+<p><em>Fix non-compliant functions in a notebook by adding placeholder documentation</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>nb_path</td>
+<td>Path</td>
+<td></td>
+<td>Path to notebook to fix</td>
+</tr>
+<tr class="even">
+<td>dry_run</td>
+<td>bool</td>
+<td>False</td>
+<td>If True, show changes without saving</td>
+</tr>
+<tr class="odd">
+<td><strong>Returns</strong></td>
+<td><strong>Dict</strong></td>
+<td></td>
+<td><strong>Summary of changes made</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="docstringinfo" class="level3">
+<h3 class="anchored" data-anchor-id="docstringinfo">DocstringInfo</h3>
+<blockquote class="blockquote">
+<pre><code> DocstringInfo (description:str, params:Dict[str,str],
+                returns:Optional[str], docstring_type:str)</code></pre>
+</blockquote>
+<p><em>Information extracted from a docstring</em></p>
+<hr>
+</section>
+<section id="detect_docstring_style" class="level3">
+<h3 class="anchored" data-anchor-id="detect_docstring_style">detect_docstring_style</h3>
+<blockquote class="blockquote">
+<pre><code> detect_docstring_style (docstring:str)</code></pre>
+</blockquote>
+<p><em>Detect the style of a docstring</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>docstring</td>
+<td>str</td>
+<td>Docstring text to analyze</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Detected style: ‘google’, ‘numpy’, ‘sphinx’, ‘docments’, or ‘unknown’</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="parse_google_docstring" class="level3">
+<h3 class="anchored" data-anchor-id="parse_google_docstring">parse_google_docstring</h3>
+<blockquote class="blockquote">
+<pre><code> parse_google_docstring (docstring:str)</code></pre>
+</blockquote>
+<p><em>Parse a Google-style docstring</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>docstring</td>
+<td>str</td>
+<td>Google-style docstring text</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>DocstringInfo</strong></td>
+<td><strong>Parsed docstring information</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="parse_numpy_docstring" class="level3">
+<h3 class="anchored" data-anchor-id="parse_numpy_docstring">parse_numpy_docstring</h3>
+<blockquote class="blockquote">
+<pre><code> parse_numpy_docstring (docstring:str)</code></pre>
+</blockquote>
+<p><em>Parse a NumPy-style docstring</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>docstring</td>
+<td>str</td>
+<td>NumPy-style docstring text</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>DocstringInfo</strong></td>
+<td><strong>Parsed docstring information</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="parse_sphinx_docstring" class="level3">
+<h3 class="anchored" data-anchor-id="parse_sphinx_docstring">parse_sphinx_docstring</h3>
+<blockquote class="blockquote">
+<pre><code> parse_sphinx_docstring (docstring:str)</code></pre>
+</blockquote>
+<p><em>Parse a Sphinx-style docstring</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>docstring</td>
+<td>str</td>
+<td>Sphinx-style docstring text</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>DocstringInfo</strong></td>
+<td><strong>Parsed docstring information</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="extract_docstring_info" class="level3">
+<h3 class="anchored" data-anchor-id="extract_docstring_info">extract_docstring_info</h3>
+<blockquote class="blockquote">
+<pre><code> extract_docstring_info (source:str, name:str)</code></pre>
+</blockquote>
+<p><em>Extract docstring information from function source code</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>source</td>
+<td>str</td>
+<td>Function source code</td>
+</tr>
+<tr class="even">
+<td>name</td>
+<td>str</td>
+<td>Function name</td>
+</tr>
+<tr class="odd">
+<td><strong>Returns</strong></td>
+<td><strong>Optional</strong></td>
+<td><strong>Extracted docstring information or None</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="convert_to_docments_format" class="level3">
+<h3 class="anchored" data-anchor-id="convert_to_docments_format">convert_to_docments_format</h3>
+<blockquote class="blockquote">
+<pre><code> convert_to_docments_format (source:str,
+                             docstring_info:__main__.DocstringInfo, result
+                             :cjm_nbdev_docments.core.DocmentsCheckResult)</code></pre>
+</blockquote>
+<p><em>Convert function source to docments format using extracted docstring info</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>source</td>
+<td>str</td>
+<td>Original function source code</td>
+</tr>
+<tr class="even">
+<td>docstring_info</td>
+<td>DocstringInfo</td>
+<td>Extracted docstring information</td>
+</tr>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Converted source code in docments format</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="convert_single_line_to_docments" class="level3">
+<h3 class="anchored" data-anchor-id="convert_single_line_to_docments">convert_single_line_to_docments</h3>
+<blockquote class="blockquote">
+<pre><code> convert_single_line_to_docments (sig_line:str,
+                                  docstring_info:__main__.DocstringInfo, r
+                                  esult:cjm_nbdev_docments.core.DocmentsCh
+                                  eckResult)</code></pre>
+</blockquote>
+<p><em>Convert single-line function signature to multi-line docments format</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sig_line</td>
+<td>str</td>
+<td>Single-line function signature</td>
+</tr>
+<tr class="even">
+<td>docstring_info</td>
+<td>DocstringInfo</td>
+<td>Extracted docstring information</td>
+</tr>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Multi-line signature with docments comments</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="convert_multiline_to_docments" class="level3">
+<h3 class="anchored" data-anchor-id="convert_multiline_to_docments">convert_multiline_to_docments</h3>
+<blockquote class="blockquote">
+<pre><code> convert_multiline_to_docments (sig_lines:List[str],
+                                docstring_info:__main__.DocstringInfo, res
+                                ult:cjm_nbdev_docments.core.DocmentsCheckR
+                                esult)</code></pre>
+</blockquote>
+<p><em>Convert multi-line function signature to docments format</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sig_lines</td>
+<td>List</td>
+<td>Multi-line function signature</td>
+</tr>
+<tr class="even">
+<td>docstring_info</td>
+<td>DocstringInfo</td>
+<td>Extracted docstring information</td>
+</tr>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with missing params info</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Multi-line signature with docments comments</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="replace_docstring_in_body" class="level3">
+<h3 class="anchored" data-anchor-id="replace_docstring_in_body">replace_docstring_in_body</h3>
+<blockquote class="blockquote">
+<pre><code> replace_docstring_in_body (body_lines:List[str], description:str,
+                            def_line:str)</code></pre>
+</blockquote>
+<p><em>Replace the docstring in function body with a simple description</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>body_lines</td>
+<td>List</td>
+<td>Function body lines</td>
+</tr>
+<tr class="even">
+<td>description</td>
+<td>str</td>
+<td>New description to use</td>
+</tr>
+<tr class="odd">
+<td>def_line</td>
+<td>str</td>
+<td>Function definition line for indentation</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>List</strong></td>
+<td><strong>Modified body lines</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="generate_fixed_source_with_conversion" class="level3">
+<h3 class="anchored" data-anchor-id="generate_fixed_source_with_conversion">generate_fixed_source_with_conversion</h3>
+<blockquote class="blockquote">
+<pre><code> generate_fixed_source_with_conversion
+                                        (result:cjm_nbdev_docments.core.Do
+                                        cmentsCheckResult)</code></pre>
+</blockquote>
+<p><em>Generate fixed source code, converting existing docstrings to docments format if possible</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 38%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>result</td>
+<td>DocmentsCheckResult</td>
+<td>Check result with non-compliant function</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>str</strong></td>
+<td><strong>Fixed source code with converted documentation</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="fix_notebook_with_conversion" class="level3">
+<h3 class="anchored" data-anchor-id="fix_notebook_with_conversion">fix_notebook_with_conversion</h3>
+<blockquote class="blockquote">
+<pre><code> fix_notebook_with_conversion (nb_path:pathlib.Path, dry_run:bool=False,
+                               convert_docstrings:bool=True)</code></pre>
+</blockquote>
+<p><em>Fix non-compliant functions in a notebook, optionally converting docstrings to docments format</em></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 34%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>nb_path</td>
+<td>Path</td>
+<td></td>
+<td>Path to notebook to fix</td>
+</tr>
+<tr class="even">
+<td>dry_run</td>
+<td>bool</td>
+<td>False</td>
+<td>If True, show changes without saving</td>
+</tr>
+<tr class="odd">
+<td>convert_docstrings</td>
+<td>bool</td>
+<td>True</td>
+<td>If True, convert existing docstrings to docments format</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>Dict</strong></td>
+<td></td>
+<td><strong>Summary of changes made</strong></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="testing" class="level3">
+<h3 class="anchored" data-anchor-id="testing">Testing</h3>
+<div id="cell-33" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_docstring_detection_and_parsing():</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Test docstring style detection and parsing for all supported formats"""</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"🧪 Testing Docstring Detection and Parsing"</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">50</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test docstrings for different styles</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    test_docstrings <span class="op">=</span> [</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Google style</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'google'</span>, <span class="st">'''"""Calculate the sum of two numbers.</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="st">        </span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="st">        Args:</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="st">            x (int): The first number to add</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a><span class="st">            y (int): The second number to add</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="st">            </span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a><span class="st">        Returns:</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a><span class="st">            int: The sum of x and y</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="st">        """'''</span>),</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>        <span class="co"># NumPy style  </span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'numpy'</span>, <span class="st">'''"""Calculate the sum of two numbers.</span></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a><span class="st">        </span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a><span class="st">        Parameters</span></span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a><span class="st">        ----------</span></span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a><span class="st">        x : int</span></span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a><span class="st">            The first number to add</span></span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a><span class="st">        y : int  </span></span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a><span class="st">            The second number to add</span></span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a><span class="st">            </span></span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a><span class="st">        Returns</span></span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a><span class="st">        -------</span></span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a><span class="st">        int</span></span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a><span class="st">            The sum of x and y</span></span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a><span class="st">        """'''</span>),</span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Sphinx style</span></span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'sphinx'</span>, <span class="st">'''"""Calculate the sum of two numbers.</span></span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a><span class="st">        </span></span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a><span class="st">        :param x: The first number to add</span></span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a><span class="st">        :param y: The second number to add</span></span>
+<span id="cb29-40"><a href="#cb29-40" aria-hidden="true" tabindex="-1"></a><span class="st">        :returns: The sum of x and y</span></span>
+<span id="cb29-41"><a href="#cb29-41" aria-hidden="true" tabindex="-1"></a><span class="st">        """'''</span>),</span>
+<span id="cb29-42"><a href="#cb29-42" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb29-43"><a href="#cb29-43" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Unknown style</span></span>
+<span id="cb29-44"><a href="#cb29-44" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'unknown'</span>, <span class="st">'''"""Just a simple description without structured parameters."""'''</span>)</span>
+<span id="cb29-45"><a href="#cb29-45" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb29-46"><a href="#cb29-46" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-47"><a href="#cb29-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test detection</span></span>
+<span id="cb29-48"><a href="#cb29-48" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"📋 Style Detection Results:"</span>)</span>
+<span id="cb29-49"><a href="#cb29-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> expected_style, docstring <span class="kw">in</span> test_docstrings:</span>
+<span id="cb29-50"><a href="#cb29-50" aria-hidden="true" tabindex="-1"></a>        detected_style <span class="op">=</span> detect_docstring_style(docstring)</span>
+<span id="cb29-51"><a href="#cb29-51" aria-hidden="true" tabindex="-1"></a>        status <span class="op">=</span> <span class="st">"✅"</span> <span class="cf">if</span> detected_style <span class="op">==</span> expected_style <span class="cf">else</span> <span class="st">"❌"</span></span>
+<span id="cb29-52"><a href="#cb29-52" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>status<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>expected_style<span class="sc">.</span>title()<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>detected_style<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-53"><a href="#cb29-53" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-54"><a href="#cb29-54" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test parsing for structured formats</span></span>
+<span id="cb29-55"><a href="#cb29-55" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">📖 Parsing Results:"</span>)</span>
+<span id="cb29-56"><a href="#cb29-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> style_name, docstring <span class="kw">in</span> test_docstrings[:<span class="dv">3</span>]:  <span class="co"># Skip unknown style</span></span>
+<span id="cb29-57"><a href="#cb29-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> style_name <span class="op">==</span> <span class="st">'google'</span>:</span>
+<span id="cb29-58"><a href="#cb29-58" aria-hidden="true" tabindex="-1"></a>            parsed <span class="op">=</span> parse_google_docstring(docstring)</span>
+<span id="cb29-59"><a href="#cb29-59" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> style_name <span class="op">==</span> <span class="st">'numpy'</span>:</span>
+<span id="cb29-60"><a href="#cb29-60" aria-hidden="true" tabindex="-1"></a>            parsed <span class="op">=</span> parse_numpy_docstring(docstring)</span>
+<span id="cb29-61"><a href="#cb29-61" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> style_name <span class="op">==</span> <span class="st">'sphinx'</span>:</span>
+<span id="cb29-62"><a href="#cb29-62" aria-hidden="true" tabindex="-1"></a>            parsed <span class="op">=</span> parse_sphinx_docstring(docstring)</span>
+<span id="cb29-63"><a href="#cb29-63" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb29-64"><a href="#cb29-64" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>style_name<span class="sc">.</span>title()<span class="sc">}</span><span class="ss"> parsing:"</span>)</span>
+<span id="cb29-65"><a href="#cb29-65" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  Description: </span><span class="sc">{</span>parsed<span class="sc">.</span>description<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-66"><a href="#cb29-66" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  Parameters: </span><span class="sc">{</span><span class="bu">list</span>(parsed.params.keys())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-67"><a href="#cb29-67" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  Returns: </span><span class="sc">{</span><span class="st">'Yes'</span> <span class="cf">if</span> parsed<span class="sc">.</span>returns <span class="cf">else</span> <span class="st">'No'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-68"><a href="#cb29-68" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb29-69"><a href="#cb29-69" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">✅ Docstring detection and parsing tests completed"</span>)</span>
+<span id="cb29-70"><a href="#cb29-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-71"><a href="#cb29-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test</span></span>
+<span id="cb29-72"><a href="#cb29-72" aria-hidden="true" tabindex="-1"></a>test_docstring_detection_and_parsing()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>🧪 Testing Docstring Detection and Parsing
+==================================================
+📋 Style Detection Results:
+✅ Google: google
+✅ Numpy: numpy
+✅ Sphinx: sphinx
+✅ Unknown: unknown
+
+📖 Parsing Results:
+
+Google parsing:
+  Description: Calculate the sum of two numbers.
+  Parameters: ['x', 'y']
+  Returns: Yes
+
+Numpy parsing:
+  Description: Calculate the sum of two numbers.
+  Parameters: ['x', 'y']
+  Returns: Yes
+
+Sphinx parsing:
+  Description: """Calculate the sum of two numbers. """
+  Parameters: ['x', 'y']
+  Returns: Yes
+
+✅ Docstring detection and parsing tests completed</code></pre>
+</div>
+</div>
+<div id="cell-34" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_function_fixing():</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Test basic function fixing for various scenarios"""</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">🔧 Testing Function Fixing"</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">50</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test cases with different compliance issues</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    test_cases <span class="op">=</span> [</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: <span class="st">'missing_all_docs'</span>,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: <span class="st">'''def bad_function(x, y, z=10):</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="st">    result = x + y + z</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="st">    return result'''</span>,</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: [</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'x'</span>, <span class="st">'annotation'</span>: <span class="va">None</span>},</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'y'</span>, <span class="st">'annotation'</span>: <span class="va">None</span>},</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'z'</span>, <span class="st">'annotation'</span>: <span class="va">None</span>}</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: <span class="va">None</span>,</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>            <span class="st">'description'</span>: <span class="st">'Missing all documentation and type hints'</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: <span class="st">'typed_function'</span>,</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: <span class="st">'''def typed_function(name: str, age: int) -&gt; str:</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="st">    return f"</span><span class="sc">{name}</span><span class="st"> is </span><span class="sc">{age}</span><span class="st"> years old"'''</span>,</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: [</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'name'</span>, <span class="st">'annotation'</span>: <span class="st">'str'</span>},</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'age'</span>, <span class="st">'annotation'</span>: <span class="st">'int'</span>}</span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: <span class="st">'str'</span>,</span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>            <span class="st">'description'</span>: <span class="st">'Has type hints but missing parameter documentation'</span></span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: <span class="st">'partially_documented'</span>,</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: <span class="st">'''def get_export_cells(</span></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a><span class="st">    nb_path: Path,  # Path to the notebook file</span></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a><span class="st">    fake_test_path: Path </span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a><span class="st">) -&gt; List[Dict[str, Any]]:  # List of cells with export directives</span></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a><span class="st">    """Extract all code cells from a notebook that have export directives"""</span></span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a><span class="st">    nb = read_nb(nb_path)</span></span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a><span class="st">    return []'''</span>,</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: [</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'nb_path'</span>, <span class="st">'annotation'</span>: <span class="st">'Path'</span>},</span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'fake_test_path'</span>, <span class="st">'annotation'</span>: <span class="st">'Path'</span>}</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: <span class="st">'List[Dict[str, Any]]'</span>,</span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>            <span class="st">'description'</span>: <span class="st">'Partially documented - missing one parameter doc'</span></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> test_case <span class="kw">in</span> test_cases:</span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">📝 Testing: </span><span class="sc">{</span>test_case[<span class="st">'description'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"Function: </span><span class="sc">{</span>test_case[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Source:</span><span class="ch">\n</span><span class="sc">{</span>test_case[<span class="st">'source'</span>]<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Create test definition</span></span>
+<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>        test_def <span class="op">=</span> {</span>
+<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: test_case[<span class="st">'name'</span>],</span>
+<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a>            <span class="st">'type'</span>: <span class="st">'FunctionDef'</span>,</span>
+<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: test_case[<span class="st">'source'</span>],</span>
+<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>            <span class="st">'notebook'</span>: <span class="st">'test.ipynb'</span>,</span>
+<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: test_case[<span class="st">'args'</span>],</span>
+<span id="cb31-63"><a href="#cb31-63" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: test_case[<span class="st">'returns'</span>]</span>
+<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb31-65"><a href="#cb31-65" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb31-66"><a href="#cb31-66" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Check compliance</span></span>
+<span id="cb31-67"><a href="#cb31-67" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> check_definition(test_def)</span>
+<span id="cb31-68"><a href="#cb31-68" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"Has docstring: </span><span class="sc">{</span>result<span class="sc">.</span>has_docstring<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-69"><a href="#cb31-69" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"Is compliant: </span><span class="sc">{</span>result<span class="sc">.</span>is_compliant<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-70"><a href="#cb31-70" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> result.is_compliant:</span>
+<span id="cb31-71"><a href="#cb31-71" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Missing: </span><span class="sc">{</span>result<span class="sc">.</span>missing_params<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-72"><a href="#cb31-72" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb31-73"><a href="#cb31-73" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Apply fix</span></span>
+<span id="cb31-74"><a href="#cb31-74" aria-hidden="true" tabindex="-1"></a>            fixed_source <span class="op">=</span> generate_fixed_source(result)</span>
+<span id="cb31-75"><a href="#cb31-75" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Fixed Source:</span><span class="ch">\n</span><span class="sc">{</span>fixed_source<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb31-76"><a href="#cb31-76" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-77"><a href="#cb31-77" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">✅ Function fixing tests completed"</span>)</span>
+<span id="cb31-78"><a href="#cb31-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-79"><a href="#cb31-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test</span></span>
+<span id="cb31-80"><a href="#cb31-80" aria-hidden="true" tabindex="-1"></a>test_function_fixing()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+🔧 Testing Function Fixing
+==================================================
+
+📝 Testing: Missing all documentation and type hints
+Function: missing_all_docs
+
+Source:
+def bad_function(x, y, z=10):
+    result = x + y + z
+    return result
+
+Has docstring: False
+Is compliant: False
+Missing: ['x', 'y', 'z']
+
+Fixed Source:
+def bad_function(
+    x,  # TODO: Add type hint and description
+    y,  # TODO: Add type hint and description
+    z=10  # TODO: Add type hint and description
+):
+    """TODO: Add function description"""
+    result = x + y + z
+    return result
+
+
+📝 Testing: Has type hints but missing parameter documentation
+Function: typed_function
+
+Source:
+def typed_function(name: str, age: int) -&gt; str:
+    return f"{name} is {age} years old"
+
+Has docstring: False
+Is compliant: False
+Missing: ['name', 'age', 'return']
+
+Fixed Source:
+def typed_function(
+    name: str,  # TODO: Add description
+    age: int  # TODO: Add description
+) -&gt; str:  # TODO: Add return description
+    """TODO: Add function description"""
+    return f"{name} is {age} years old"
+
+
+📝 Testing: Partially documented - missing one parameter doc
+Function: partially_documented
+
+Source:
+def get_export_cells(
+    nb_path: Path,  # Path to the notebook file
+    fake_test_path: Path 
+) -&gt; List[Dict[str, Any]]:  # List of cells with export directives
+    """Extract all code cells from a notebook that have export directives"""
+    nb = read_nb(nb_path)
+    return []
+
+Has docstring: False
+Is compliant: False
+Missing: ['fake_test_path']
+
+Fixed Source:
+def get_export_cells(
+    nb_path: Path,  # Path to the notebook file
+    fake_test_path: Path   # TODO: Add description
+) -&gt; List[Dict[str, Any]]:  # List of cells with export directives
+    """Extract all code cells from a notebook that have export directives"""
+    nb = read_nb(nb_path)
+    return []
+
+
+✅ Function fixing tests completed</code></pre>
+</div>
+</div>
+<div id="cell-35" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_docstring_conversion():</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Test conversion from various docstring formats to docments style"""</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">🔄 Testing Docstring Conversion"</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">50</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Test functions with different docstring formats</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    test_functions <span class="op">=</span> [</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: <span class="st">'google_example'</span>,</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: <span class="st">'''def google_example(name: str, age: int, active: bool = True) -&gt; str:</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="st">    """Generate a user profile string.</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="st">    </span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="st">    Args:</span></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="st">        name (str): The user's full name</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="st">        age (int): The user's age in years</span></span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a><span class="st">        active (bool): Whether the user is currently active</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a><span class="st">        </span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a><span class="st">    Returns:</span></span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a><span class="st">        str: A formatted profile string</span></span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a><span class="st">    """</span></span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="st">    return f"</span><span class="sc">{name}</span><span class="st"> (</span><span class="sc">{age}</span><span class="st">) - {'Active' if active else 'Inactive'}"'''</span>,</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: [</span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'name'</span>, <span class="st">'annotation'</span>: <span class="st">'str'</span>},</span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'age'</span>, <span class="st">'annotation'</span>: <span class="st">'int'</span>},</span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'active'</span>, <span class="st">'annotation'</span>: <span class="st">'bool'</span>}</span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: <span class="st">'str'</span>,</span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>            <span class="st">'style'</span>: <span class="st">'Google'</span></span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: <span class="st">'numpy_example'</span>,</span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: <span class="st">'''def numpy_example(data: list, threshold: float = 0.5) -&gt; dict:</span></span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a><span class="st">    """Process data based on threshold.</span></span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a><span class="st">    </span></span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a><span class="st">    Parameters</span></span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a><span class="st">    ----------</span></span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a><span class="st">    data : list</span></span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a><span class="st">        Input data to process</span></span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a><span class="st">    threshold : float</span></span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a><span class="st">        Minimum threshold value</span></span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a><span class="st">        </span></span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a><span class="st">    Returns</span></span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a><span class="st">    -------</span></span>
+<span id="cb33-44"><a href="#cb33-44" aria-hidden="true" tabindex="-1"></a><span class="st">    dict</span></span>
+<span id="cb33-45"><a href="#cb33-45" aria-hidden="true" tabindex="-1"></a><span class="st">        Processing results with statistics</span></span>
+<span id="cb33-46"><a href="#cb33-46" aria-hidden="true" tabindex="-1"></a><span class="st">    """</span></span>
+<span id="cb33-47"><a href="#cb33-47" aria-hidden="true" tabindex="-1"></a><span class="st">    return {'processed': len(data), 'threshold': threshold}'''</span>,</span>
+<span id="cb33-48"><a href="#cb33-48" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: [</span>
+<span id="cb33-49"><a href="#cb33-49" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'data'</span>, <span class="st">'annotation'</span>: <span class="st">'list'</span>},</span>
+<span id="cb33-50"><a href="#cb33-50" aria-hidden="true" tabindex="-1"></a>                {<span class="st">'name'</span>: <span class="st">'threshold'</span>, <span class="st">'annotation'</span>: <span class="st">'float'</span>}</span>
+<span id="cb33-51"><a href="#cb33-51" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb33-52"><a href="#cb33-52" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: <span class="st">'dict'</span>,</span>
+<span id="cb33-53"><a href="#cb33-53" aria-hidden="true" tabindex="-1"></a>            <span class="st">'style'</span>: <span class="st">'NumPy'</span></span>
+<span id="cb33-54"><a href="#cb33-54" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb33-55"><a href="#cb33-55" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb33-56"><a href="#cb33-56" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb33-57"><a href="#cb33-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> func_info <span class="kw">in</span> test_functions:</span>
+<span id="cb33-58"><a href="#cb33-58" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">📝 Testing </span><span class="sc">{</span>func_info[<span class="st">'style'</span>]<span class="sc">}</span><span class="ss"> Style Conversion"</span>)</span>
+<span id="cb33-59"><a href="#cb33-59" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"Function: </span><span class="sc">{</span>func_info[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb33-60"><a href="#cb33-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-61"><a href="#cb33-61" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Source:</span><span class="ch">\n</span><span class="sc">{</span>func_info[<span class="st">'source'</span>]<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb33-62"><a href="#cb33-62" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-63"><a href="#cb33-63" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Create test definition</span></span>
+<span id="cb33-64"><a href="#cb33-64" aria-hidden="true" tabindex="-1"></a>        test_def <span class="op">=</span> {</span>
+<span id="cb33-65"><a href="#cb33-65" aria-hidden="true" tabindex="-1"></a>            <span class="st">'name'</span>: func_info[<span class="st">'name'</span>],</span>
+<span id="cb33-66"><a href="#cb33-66" aria-hidden="true" tabindex="-1"></a>            <span class="st">'type'</span>: <span class="st">'FunctionDef'</span>,</span>
+<span id="cb33-67"><a href="#cb33-67" aria-hidden="true" tabindex="-1"></a>            <span class="st">'source'</span>: func_info[<span class="st">'source'</span>],</span>
+<span id="cb33-68"><a href="#cb33-68" aria-hidden="true" tabindex="-1"></a>            <span class="st">'notebook'</span>: <span class="st">'test.ipynb'</span>,</span>
+<span id="cb33-69"><a href="#cb33-69" aria-hidden="true" tabindex="-1"></a>            <span class="st">'args'</span>: func_info[<span class="st">'args'</span>],</span>
+<span id="cb33-70"><a href="#cb33-70" aria-hidden="true" tabindex="-1"></a>            <span class="st">'returns'</span>: func_info[<span class="st">'returns'</span>]</span>
+<span id="cb33-71"><a href="#cb33-71" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb33-72"><a href="#cb33-72" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-73"><a href="#cb33-73" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Check original compliance</span></span>
+<span id="cb33-74"><a href="#cb33-74" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> check_definition(test_def)</span>
+<span id="cb33-75"><a href="#cb33-75" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-76"><a href="#cb33-76" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-77"><a href="#cb33-77" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Extract and verify docstring info</span></span>
+<span id="cb33-78"><a href="#cb33-78" aria-hidden="true" tabindex="-1"></a>        docstring_info <span class="op">=</span> extract_docstring_info(result.source, result.name)</span>
+<span id="cb33-79"><a href="#cb33-79" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> docstring_info:</span>
+<span id="cb33-80"><a href="#cb33-80" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Docstring type: </span><span class="sc">{</span>docstring_info<span class="sc">.</span>docstring_type<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb33-81"><a href="#cb33-81" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Parameters found: </span><span class="sc">{</span><span class="bu">list</span>(docstring_info.params.keys())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb33-82"><a href="#cb33-82" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Return info: </span><span class="sc">{</span><span class="st">'Yes'</span> <span class="cf">if</span> docstring_info<span class="sc">.</span>returns <span class="cf">else</span> <span class="st">'No'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb33-83"><a href="#cb33-83" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-84"><a href="#cb33-84" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Convert to docments format</span></span>
+<span id="cb33-85"><a href="#cb33-85" aria-hidden="true" tabindex="-1"></a>        converted <span class="op">=</span> generate_fixed_source_with_conversion(result)</span>
+<span id="cb33-86"><a href="#cb33-86" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Converted Source:</span><span class="ch">\n</span><span class="sc">{</span>converted<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb33-87"><a href="#cb33-87" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb33-88"><a href="#cb33-88" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Verify converted version is compliant</span></span>
+<span id="cb33-89"><a href="#cb33-89" aria-hidden="true" tabindex="-1"></a>        test_def_converted <span class="op">=</span> test_def.copy()</span>
+<span id="cb33-90"><a href="#cb33-90" aria-hidden="true" tabindex="-1"></a>        test_def_converted[<span class="st">'source'</span>] <span class="op">=</span> converted</span>
+<span id="cb33-91"><a href="#cb33-91" aria-hidden="true" tabindex="-1"></a>        result_converted <span class="op">=</span> check_definition(test_def_converted)</span>
+<span id="cb33-92"><a href="#cb33-92" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb33-93"><a href="#cb33-93" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">✅ Docstring conversion tests completed"</span>)</span>
+<span id="cb33-94"><a href="#cb33-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-95"><a href="#cb33-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Run test</span></span>
+<span id="cb33-96"><a href="#cb33-96" aria-hidden="true" tabindex="-1"></a>test_docstring_conversion()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+🔄 Testing Docstring Conversion
+==================================================
+
+📝 Testing Google Style Conversion
+Function: google_example
+
+Source:
+def google_example(name: str, age: int, active: bool = True) -&gt; str:
+    """Generate a user profile string.
+
+    Args:
+        name (str): The user's full name
+        age (int): The user's age in years
+        active (bool): Whether the user is currently active
+
+    Returns:
+        str: A formatted profile string
+    """
+    return f"{name} ({age}) - {'Active' if active else 'Inactive'}"
+
+Docstring type: google
+Parameters found: ['name', 'age', 'active']
+Return info: Yes
+
+Converted Source:
+def google_example(
+    name: str,  # The user's full name
+    age: int,  # The user's age in years
+    active: bool = True  # Whether the user is currently active
+) -&gt; str:  # str: A formatted profile string
+    """Generate a user profile string."""
+    return f"{name} ({age}) - {'Active' if active else 'Inactive'}"
+
+
+📝 Testing NumPy Style Conversion
+Function: numpy_example
+
+Source:
+def numpy_example(data: list, threshold: float = 0.5) -&gt; dict:
+    """Process data based on threshold.
+
+    Parameters
+    ----------
+    data : list
+        Input data to process
+    threshold : float
+        Minimum threshold value
+
+    Returns
+    -------
+    dict
+        Processing results with statistics
+    """
+    return {'processed': len(data), 'threshold': threshold}
+
+Docstring type: numpy
+Parameters found: ['data', 'threshold']
+Return info: Yes
+
+Converted Source:
+def numpy_example(
+    data: list,  # Input data to process
+    threshold: float = 0.5  # Minimum threshold value
+) -&gt; dict:  # dict Processing results with statistics
+    """Process data based on threshold."""
+    return {'processed': len(data), 'threshold': threshold}
+
+
+✅ Docstring conversion tests completed</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/cj-mills\.github\.io\/cjm-nbdev-docments");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/cj-mills/cjm-nbdev-docments/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
